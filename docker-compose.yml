@@ -1,0 +1,85 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16.9-bookworm
+    container_name: camau_museum_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mAnaTioNylEAseaCcc
+      POSTGRES_DB: postgresdb
+      PG_DATA: /var/lib/postgresql/data
+    volumes:
+      - pgsync-pgdata:/var/lib/postgresql/data
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf
+    ports:
+      - "5432:5432"
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    image: es8-with-vn-analyzer:0.0.1
+    container_name: camau_museum_elasticsearch
+    environment:
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - ELASTIC_PASSWORD=mySecurePassword123
+      - ELASTIC_USER=elastic
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - discovery.type=single-node
+      - cluster.name=docker-cluster
+      - node.name=es-node-1
+    volumes:
+      - pgsync-esdata:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: camau_museum_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - pgsync-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgsync:
+    image: toluaina1/pgsync:latest
+    container_name: camau_museum_pgsync
+    env_file:
+      - .env
+    volumes:
+      - ./schema.json:/config/schema.json
+      - ./pgsync-entrypoint.sh:/entrypoint.sh
+      - pgsync-checkpoint:/tmp
+    depends_on:
+      - postgres
+      - elasticsearch
+      - redis
+    entrypoint: ["/bin/bash"]
+    command: ["/entrypoint.sh"]
+
+volumes:
+  pgsync-pgdata:
+    driver: local
+  pgsync-esdata:
+    driver: local
+  pgsync-redisdata:
+    driver: local
+  pgsync-checkpoint:
+    driver: local

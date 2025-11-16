@@ -1,0 +1,11 @@
+[
+  {
+    "database": "postgresdb",
+    "index": "danh-muc",
+    "nodes": {
+      "table": "NhomDanhMuc",
+      "schema": "public",
+      "columns": ["id", "Ten", "TenHeThong"]
+    }
+  }
+]
