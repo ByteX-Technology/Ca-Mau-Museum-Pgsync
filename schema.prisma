@@ -1,0 +1,1868 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+model NguoiDung {
+  id                BigInt    @id @default(autoincrement())
+  Email             String
+  TenDangNhap       String
+  TenDayDu          String?
+  MatKhau           String
+  NhomNguoiDungId   BigInt?
+  DoiMauKhauGanNhat DateTime? @default(now())
+  DaDangNhapLanDau  Int?      @default(0)
+  HoatDong          Int       @default(1)
+  SoDienThoai       String?
+  QuanTriVien       Int       @default(0)
+  TaiKhoanMoi       Int       @default(1)
+  ThoiGianTao       DateTime? @default(now())
+  ThoiGianCapNhat   DateTime? @updatedAt
+  DonViPhongBanId   BigInt?
+  ChucVuId          BigInt?
+
+  DsNhomNguoiDung  NhomNguoiDung?    @relation(fields: [NhomNguoiDungId], references: [id], onDelete: SetNull)
+  DonViPhongBan    DonViPhongBan?    @relation(fields: [DonViPhongBanId], references: [id], onDelete: SetNull)
+  ChucVu           DanhMuc?          @relation(fields: [ChucVuId], references: [id], onDelete: SetNull, name: "NguoiDungToChucVu")
+  DsLichSuTruyCap  LichSuTruyCap[]
+  DsNhatKyHoatDong NhatKyHoatDong[]
+  TaiLieuHuongDan  TaiLieuHuongDan[]
+  ChiTietHienVat   ChiTietHienVat[]
+  NhatKyHienVat    NhatKyHienVat[]
+  QuanLy           DonViPhongBan?    @relation("TruongPhong")
+
+  MuonTraHienVat MuonTraHienVat[]
+
+  // Relations for VanBanMuonTraHienVat
+  VanBanMuonTraHienVatTao VanBanMuonTraHienVat[] @relation("VanBanMuonTraHienVatToNguoiTao")
+
+  CongViecNen CongViecNen[]
+  NoiDung     NoiDung[]
+
+  NoiDungDeNghiSuKien  NoiDungDeNghiSuKien[]  @relation("NoiDungDeNghiSuKienToNguoiDung")
+  NoiDungDeNghiNoiDung NoiDungDeNghiNoiDung[]
+  DsThongBao           ThongBao[]
+
+  DsThongBaoNguoiDung          ThongBaoNguoiDung[]
+  NoiDungDeNghiHoSo            NoiDungDeNghiHoSo[]
+  DsNhatKiDiSanVanHoaPhiVatThe NhatKiDiSanVanHoaPhiVatThe[]  @relation("NhatKiDiSanVanHoaPhiVatTheToNguoiDung")
+  ChiTietDiSanVanHoaPhiVatThe  ChiTietDiSanVanHoaPhiVatThe[]
+  DsNhatKyDiTich               NhatKyDiTich[]                @relation("NhatKyDiTichToNguoiDung")
+  ChiTietDiTich                ChiTietDiTich[]
+  MuonTraDiTich                MuonTraDiTich[]               @relation("MuonTraDiTichToNguoiChoMuon")
+  DaXoa                        Int                           @default(0)
+}
+
+model NhomNguoiDung {
+  id                   BigInt               @id @default(autoincrement())
+  Ten                  String               @unique()
+  MoTa                 String?
+  HoatDong             Int                  @default(1)
+  ThoiGianTao          DateTime?            @default(now())
+  ThoiGianCapNhat      DateTime?            @updatedAt
+  DsNguoiDung          NguoiDung[]
+  DsQuyenNhomNguoiDung QuyenNhomNguoiDung[]
+}
+
+model QuyenNhomNguoiDung {
+  id              BigInt    @id @default(autoincrement())
+  NhomNguoiDungId BigInt
+  QuyenId         BigInt
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  NhomNguoiDung NhomNguoiDung @relation(fields: [NhomNguoiDungId], references: [id])
+  Quyen         Quyen         @relation(fields: [QuyenId], references: [id])
+}
+
+model Quyen {
+  id               BigInt        @id @default(autoincrement())
+  Ten              String
+  MoTa             String?
+  TenHeThong       String
+  NhomQuyenId      BigInt
+  HanhDong         QuyenHanhDong
+  TaiNguyen        String
+  PhamViGiaTri     String?
+  PhamViTruong     String?
+  DsKeThua         String?
+  ThuTuHienThi     Int?
+  HanhDongDsKeThua String?
+  ThoiGianTao      DateTime?     @default(now())
+  ThoiGianCapNhat  DateTime?     @updatedAt
+
+  NhomQuyen            NhomQuyen            @relation(fields: [NhomQuyenId], references: [id])
+  DsQuyenNhomNguoiDung QuyenNhomNguoiDung[]
+}
+
+enum QuyenHanhDong {
+  get
+  post
+  patch
+  delete
+}
+
+model NhomQuyen {
+  id              BigInt    @id @default(autoincrement())
+  Ten             String
+  MoTa            String?
+  TenHeThong      String
+  ThuTuHienThi    Int
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+  DsQuyen         Quyen[]
+}
+
+enum LoaiDanhMuc {
+  general
+  system
+}
+
+model DanhMuc {
+  id                BigInt       @id @default(autoincrement())
+  Ten               String       @db.VarChar(255)
+  TenHeThong        String       @db.VarChar(255)
+  MoTa              String?      @db.Text
+  ThuTuHienThi      Int
+  LoaiDanhMuc       LoaiDanhMuc
+  HoatDong          Int          @default(0)
+  ThoiGianTao       DateTime?    @default(now())
+  ThoiGianCapNhat   DateTime?    @updatedAt
+  NhomDanhMuc       NhomDanhMuc? @relation(fields: [NhomDanhMucId], references: [id])
+  NhomDanhMucId     BigInt?
+  DanhMucChinhId    BigInt? // Parent category ID
+  DanhMucChinh      DanhMuc?     @relation("DanhMucToDanhMuc", fields: [DanhMucChinhId], references: [id], onDelete: SetNull)
+  DsDanhMucLienQuan DanhMuc[]    @relation("DanhMucToDanhMuc")
+
+  NguonGocHienVat     ChiTietHienVat[]      @relation("NguonGoc")
+  ThoiKyHienVat       ChiTietHienVat[]      @relation("ThoiKy")
+  LoaiHienVat         ChiTietHienVat[]      @relation("LoaiHienVat")
+  ChuDeHienVat        ChiTietHienVat[]      @relation("ChuDe")
+  SuuTapHienVat       ChiTietHienVat[]      @relation("SuuTap")
+  LoaiBaoMatHienVat   ChiTietHienVat[]      @relation("LoaiBaoMatHienVat")
+  BaoQuanHienVat      BaoQuanHienVat[]      @relation("LoaiBaoQuanHienVat")
+  PhieuBaoQuanHienVat PhieuBaoQuanHienVat[] @relation("LoaiPhieuBaoQuanHienVat")
+  TuLieuVanBan        TuLieuVanBan[]
+
+  DiChuyenHienVat                 DiChuyenHienVat[]
+  DiSanVanHoaPhiVatTheXaHuyen     ChiTietDiSanVanHoaPhiVatThe[] @relation("DiSanVanHoaPhiVatTheToXaPhuong")
+  DiSanVanHoaPhiVatTheTinhThanh   ChiTietDiSanVanHoaPhiVatThe[] @relation("DiSanVanHoaPhiVatTheToTinhThanh")
+  DiSanVanHoaPhiVatTheTinhThanhCu ChiTietDiSanVanHoaPhiVatThe[] @relation("DiSanVanHoaPhiVatTheToTinhThanhCu")
+  DiSanVanHoaPhiVatTheXaPhuongCu  ChiTietDiSanVanHoaPhiVatThe[] @relation("DiSanVanHoaPhiVatTheToXaPhuongCu")
+  DiSanVanHoaPhiVatTheQuanHuyenCu ChiTietDiSanVanHoaPhiVatThe[] @relation("DiSanVanHoaPhiVatTheToQuanHuyenCu")
+  DiSanVanHoaPhiVatTheLoaiDiSan   ChiTietDiSanVanHoaPhiVatThe[] @relation("DiSanVanHoaPhiVatTheToLoaiDiSan")
+  DiTichLoaiDiTich                ChiTietDiTich[]               @relation("DiTichToLoaiDiTich")
+  DiTichTinhThanh                 ChiTietDiTich[]               @relation("DiTichToTinhThanh")
+  DiTichXaPhuong                  ChiTietDiTich[]               @relation("DiTichToXaPhuong")
+  DiTichQuanHuyenCu               ChiTietDiTich[]               @relation("DiTichToQuanHuyenCu")
+  DiTichTinhThanhCu               ChiTietDiTich[]               @relation("DiTichToTinhThanhCu")
+  DiTichXaPhuongCu                ChiTietDiTich[]               @relation("DiTichToXaPhuongCu")
+
+  DiTichThanhPhanLoaiDiTich DiTichThanhPhan[] @relation("DiTichThanhPhanToLoaiDiTich")
+  DiTichThanhPhanChatLieu   DiTichThanhPhan[] @relation("DiTichThanhPhanToChatLieu")
+  DiTichThanhPhanThoiKy     DiTichThanhPhan[] @relation("DiTichThanhPhanToThoiKy")
+
+  DiTichThoiKy       ChiTietDiTich[] @relation("DiTichToThoiKy")
+  DiTichVatLieu      ChiTietDiTich[] @relation("DiTichToVatLieu")
+  DiTichCoQuanQuanLy ChiTietDiTich[] @relation("DiTichToCoQuanQuanLy")
+
+  DiTichHangDiTich HangDiTich[] @relation("HangDiTichToLoaiHang")
+
+  HinhAnhDiTich                     AnhDiTich[]
+  KhoanhVungDiTichPhanLoai          KhoanhVungDiTich[]          @relation("KhoanhVungDiTichToPhanLoai")
+  KhoanhVungDiTichThanhPhanPhanLoai KhoanhVungDiTichThanhPhan[] @relation("KhoanhVungDiTichThanhPhanToPhanLoai")
+
+  MuonTraHienVat                MuonTraHienVat[]              @relation(name: "MuonTraHienVatNhuCauSuDung")
+  DsDiSanVanHoaPhiVatTheDanhMuc DiSanVanHoaPhiVatTheDanhMuc[]
+
+  MuonTraHienVatDonVi MuonTraHienVat[] @relation(name: "MuonTraHienVatDonVi")
+
+  // Reverse relation for ChucVu
+  DsNguoiDungChucVu NguoiDung[] @relation("NguoiDungToChucVu")
+}
+
+model NhomDanhMuc {
+  id              BigInt      @id @default(autoincrement())
+  Ten             String
+  TenHeThong      String
+  MoTa            String?
+  LoaiDanhMuc     LoaiDanhMuc
+  ThoiGianTao     DateTime?   @default(now())
+  ThoiGianCapNhat DateTime?   @updatedAt
+  DsDanhMuc       DanhMuc[]
+}
+
+model LichSuTruyCap {
+  id               BigInt    @id @default(autoincrement())
+  NguoiDungId      BigInt
+  ThoiGianThucHien DateTime
+  DiaChiIp         String?
+  TrinhDuyet       String?
+  HeDieuHanh       String?
+  HanhDong         String?
+  TrangThai        String?
+  ThietBi          String?
+  ThoiGianTao      DateTime? @default(now())
+  ThoiGianCapNhat  DateTime? @updatedAt
+
+  NguoiDung NguoiDung @relation(fields: [NguoiDungId], references: [id])
+}
+
+model NhatKyHoatDong {
+  id              BigInt    @id @default(autoincrement())
+  HanhDong        String
+  Mota            String?
+  TenThucThe      String?
+  TrangThai       String
+  NguoiDungId     BigInt
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  NguoiDung NguoiDung @relation(fields: [NguoiDungId], references: [id])
+}
+
+model ThongTinLienHe {
+  id              BigInt    @id @default(autoincrement())
+  DiaChi          String    @db.Text
+  DienThoai       String?   @db.VarChar(10)
+  Email           String
+  NgayMoCua       String
+  GioMoCua        String
+  ThongTinThem    Json?     @db.JsonB
+  Facebook        String?   @db.VarChar(255)
+  Zalo            String?   @db.VarChar(255)
+  Instagram       String?   @db.VarChar(255)
+  Youtube         String?   @db.VarChar(255)
+  Tiktok          String?   @db.VarChar(255)
+  GoogleMaps      String?   @db.Text
+  BanQuyen        String    @default("© All copyright 2025") @db.VarChar(255)
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+}
+
+enum LoaiTuLieu {
+  image
+  video
+  file_document
+  text_document
+}
+
+model TuLieu {
+  id                 BigInt     @id @default(autoincrement())
+  TieuDe             String
+  MoTa               String?
+  MoTaNgan           String?
+  LoaiTuLieu         LoaiTuLieu
+  DuongDanAnhDaiDien String?    @db.VarChar(2000)
+  HienThi            Int        @default(1)
+  ThoiGianTao        DateTime?  @default(now())
+  ThoiGianCapNhat    DateTime?  @updatedAt
+
+  DsHinhAnh TuLieuHinhAnh[]
+  Video     TuLieuVideo?
+  TaiLieu   TuLieuTaiLieu?
+  VanBan    TuLieuVanBan?
+}
+
+model Tep {
+  id                                BigInt                       @id @default(autoincrement()) // Primary key
+  TenTep                            String                       @db.VarChar(255) // File name
+  LoaiTep                           String                       @db.VarChar(255) // File type (e.g., docx, pdf, etc.)
+  KichThuocTep                      BigInt?
+  Khoa                              String                       @db.VarChar(255) // Encryption key
+  DuongDan                          String                       @db.VarChar(2000) // File path
+  XemTruoc                          String?                      @db.Text // Preview URL
+  LoaiMime                          String                       @db.VarChar(255) // MIME type
+  ThoiGianTao                       DateTime?                    @default(now()) // Creation timestamp
+  ThoiGianCapNhat                   DateTime?                    @updatedAt // Last updated timestamp
+  TaiLieuHuongDan                   TaiLieuHuongDan[]
+  TuLieuHinhAnh                     TuLieuHinhAnh?
+  TuLieuVideo                       TuLieuVideo?
+  TuLieuVanBan                      TuLieuVanBan?
+  HinhAnhHienVat                    HinhAnhHienVat?
+  ChiTietHienVat                    ChiTietHienVat?              @relation("RelationToChiTietHienVat")
+  ChiTietHienVat3D                  ChiTietHienVat?              @relation("RelationToChiTietHienVat3D") // Optional relation to 3D model
+  AmThanhMoTa                       ChiTietHienVat?              @relation("RelationToChiTietHienVatAmThanh")
+  NoiDung                           NoiDung?
+  SuKienBanner                      SuKien?                      @relation("RelationToSuKienBanner")
+  DiSanVanHoaPhiVatTheAnhDaiDien    ChiTietDiSanVanHoaPhiVatThe? @relation("DiSanVanHoaPhiVatTheToAnhDaiDien")
+  DiSanVanHoaPhiVatTheAmThanhMoTa   ChiTietDiSanVanHoaPhiVatThe? @relation("DiSanVanHoaPhiVatTheToAmThanhMoTa")
+  TuLieuLienQuanDiSanVanHoa         TuLieuLienQuanDiSanVanHoa[]  @relation("TuLieuLienQuanDiSanVanHoaToTep")
+  QuyHoachDiTich                    QuyHoachDiTich[]             @relation("QuyHoachDiTichToTep")
+  KhoanhVungDiTich                  KhoanhVungDiTich[]           @relation("KhoanhVungDiTichToTep")
+  DuAnBaoQuanDiTich                 DuAnBaoQuanDiTich[]          @relation("DuAnBaoQuanDiTichToTep")
+  TaiLieuHanNomDiTich               TaiLieuHanNomDiTich[]        @relation("TaiLieuHanNomDiTichToTep")
+  AnhDiTich                         AnhDiTich[]                  @relation("AnhDiTichToTep")
+  VideoGhiAmDiTich                  VideoGhiAmDiTich[]           @relation("VideoGhiAmDiTichToTep")
+  BanDoChiDanDiTich                 BanDoChiDanDiTich[]          @relation("BanDoChiDanDiTichToTep")
+  VanBanMuonTraHienVatMuon          VanBanMuonTraHienVat[]       @relation("VanBanMuonTraHienVatToTepMuon")
+  VanBanMuonTraHienVatTra           VanBanMuonTraHienVat[]       @relation("VanBanMuonTraHienVatToTepTra")
+  NguonVonDauTuDiTich               NguonVonDauTuDiTich[]        @relation("NguonVonDauTuDiTichToTep")
+  HoSoDinhKem                       HoSo[]                       @relation("HoSoToTepDinhKem")
+  DonDeNghiXepHangDiTich            DonDeNghiXepHangDiTich[]     @relation("DonDeNghiXepHangDiTichToTep")
+  KiemTraXuLyViPhamDiTich           KiemTraXuLyViPhamDiTich[]    @relation("KiemTraXuLyViPhamDiTichToTep")
+  LyLichDiTich                      LyLichDiTich[]               @relation("LyLichDiTichToTep")
+  BanVeKyThuatDiTich                BanVeKyThuatDiTich[]         @relation("BanVeKyThuatDiTichToTep")
+  TuSuaCapThietDiTich               TuSuaCapThietDiTich[]        @relation("TuSuaCapThietDiTichToTep")
+  BanQuyetDinhXepHangDiTich         BanQuyetDinhXepHangDiTich[]  @relation("BanQuyetDinhXepHangDiTichToTep")
+  ThietKeBaoQuanDiTich              ThietKeBaoQuanDiTich[]       @relation("ThietKeBaoQuanDiTichToTep")
+  ThamDoKhaoCoDiTichToBaoCaoSoBo    ThamDoKhaoCoDiTich?          @relation("ThamDoKhaoCoDiTichToBaoCaoSoBo")
+  ThamDoKhaoCoDiTichToBaoCaoKhoaHoc ThamDoKhaoCoDiTich?          @relation("ThamDoKhaoCoDiTichToBaoCaoKhoaHoc")
+  KhoanhVungDiTichThanhPhan         KhoanhVungDiTichThanhPhan[]  @relation("KhoanhVungDiTichThanhPhanToTep")
+  ChiTietDiTichHinhAnh3D            ChiTietDiTich?               @relation("DiTichToHinhAnh3D")
+  NhomNoiDung                       NhomNoiDung[]
+  ChiTietDiTichAmThanhMoTa          ChiTietDiTich[]              @relation("DiTichToAmThanhMoTa")
+  ChiTietDiTichVanBanQuyetDinh      ChiTietDiTich?               @relation("DiTichToVanBanQuyetDinh")
+  HangDiTichVanBanQuyetDinh         HangDiTich?                  @relation("HangDiTichToVanBanQuyetDinh")
+
+  BaoQuanHienVat BaoQuanHienVat[]
+
+  DiChuyenHienVat DiChuyenHienVat[]
+
+  QuanLyNgheNhan QuanLyNgheNhan[] @relation("QuanLyNgheNhanToAnhDaiDien")
+
+  MuonTraHienVat MuonTraHienVat[]
+  BoSuuTap       BoSuuTap?
+
+  VanBanMuonTraHienVatBanGiaoMuon VanBanMuonTraHienVat[] @relation("VanBanMuonTraHienVatToTepBanGiaoMuon")
+
+  VanBanMuonTraHienVatBanGiaoTra VanBanMuonTraHienVat[] @relation("VanBanMuonTraHienVatToTepBanGiaoTra")
+
+  PhieuBaoQuanHienVat PhieuBaoQuanHienVat[] @relation("PhieuBaoQuanHienVatToTep")
+}
+
+model TaiLieuHuongDan {
+  id              BigInt    @id @default(autoincrement())
+  TieuDe          String    @db.VarChar(255)
+  MoTa            String?   @db.Text
+  HoatDong        Int       @default(1)
+  NguoiDungId     BigInt
+  TepId           BigInt?
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  NguoiDung NguoiDung? @relation(fields: [NguoiDungId], references: [id])
+  Tep       Tep?       @relation(fields: [TepId], references: [id], onDelete: SetNull)
+}
+
+model TuLieuHinhAnh {
+  id              BigInt    @id @default(autoincrement())
+  TieuDe          String
+  MoTa            String?
+  MoTaNgan        String?
+  TuLieuId        BigInt
+  TepId           BigInt?   @unique
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  TuLieu TuLieu @relation(fields: [TuLieuId], references: [id], onDelete: Cascade)
+  Tep    Tep?   @relation(fields: [TepId], references: [id], onDelete: SetNull)
+}
+
+model TuLieuVideo {
+  id              BigInt    @id @default(autoincrement())
+  TieuDe          String
+  MoTa            String?   @db.Text
+  MoTaNgan        String?
+  DuongDanVideo   String?   @db.VarChar(2000)
+  TuLieuId        BigInt    @unique
+  TepId           BigInt?   @unique
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  TuLieu TuLieu @relation(fields: [TuLieuId], references: [id], onDelete: Cascade)
+  Tep    Tep?   @relation(fields: [TepId], references: [id], onDelete: SetNull)
+}
+
+model TuLieuTaiLieu {
+  id              BigInt    @id @default(autoincrement())
+  TieuDe          String
+  MoTa            String?
+  MoTaNgan        String?
+  TaiLieuChiTiet  String?   @db.Text
+  TuLieuId        BigInt    @unique
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  TuLieu TuLieu @relation(fields: [TuLieuId], references: [id], onDelete: Cascade)
+}
+
+model TuLieuVanBan {
+  id              BigInt    @id @default(autoincrement())
+  TieuDe          String
+  MoTa            String?
+  MoTaNgan        String?
+  NgayBanHanh     DateTime?
+  CoQuanBanHanhId BigInt?
+  SoHieuVanBan    String?   @db.VarChar(100)
+  TrichYeu        String?   @db.Text
+  TuLieuId        BigInt    @unique
+  TepId           BigInt?   @unique
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  TuLieu        TuLieu   @relation(fields: [TuLieuId], references: [id], onDelete: Cascade)
+  Tep           Tep?     @relation(fields: [TepId], references: [id], onDelete: SetNull)
+  CoQuanBanHanh DanhMuc? @relation(fields: [CoQuanBanHanhId], references: [id], onDelete: SetNull)
+}
+
+model NhomThongTinHoTro {
+  id              BigInt    @id @default(autoincrement()) // Primary key
+  Ten             String    @db.VarChar(255) // Name of the category
+  MoTa            String?   @db.Text // Description (optional)
+  HoatDong        Int?      @default(1) // Active status
+  TenHeThong      String?   @db.VarChar(255) // System name
+  ThoiGianTao     DateTime? @default(now()) // Creation timestamp
+  ThoiGianCapNhat DateTime? @updatedAt // Last updated timestamp
+
+  ThongTinHoTro ThongTinHoTro? @relation // Relation to SupportInformation
+}
+
+model ThongTinHoTro {
+  id              BigInt    @id @default(autoincrement()) // Primary key
+  NoiDung         String    @db.Text // Content (text editor)
+  TieuDe          String    @db.VarChar(255) // Title
+  ThoiGianTao     DateTime? @default(now()) // Creation timestamp
+  ThoiGianCapNhat DateTime? @updatedAt // Last updated timestamp
+
+  NhomThongTinHoTro   NhomThongTinHoTro? @relation(fields: [NhomThongTinHoTroId], references: [id])
+  NhomThongTinHoTroId BigInt?            @unique // Foreign key to SupportCategory
+}
+
+model HangSo {
+  id              BigInt    @id @default(autoincrement())
+  Nhom            String    @db.VarChar(255)
+  Khoa            String    @db.VarChar(255)
+  GiaTri          String    @db.VarChar(255)
+  MoTa            String    @db.VarChar(255)
+  KichHoat        Int       @default(1)
+  MauSac          String?   @db.VarChar(255)
+  ThuTuHienThi    Int?
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  @@unique([Nhom, Khoa])
+}
+
+model HoSo {
+  id                          BigInt                       @id @default(autoincrement())
+  HoatDong                    Int                          @default(1)
+  TrangThai                   String                       @db.VarChar(255)
+  LoaiHoSo                    String                       @db.VarChar(255)
+  GhiChu                      String?                      @db.Text
+  OKhoTam                     Int                          @default(0)
+  TepNoiDungDuyetOKhoTam      Json?                        @db.JsonB
+  TepDinhKemId                BigInt?
+  ChiTietHienVat              ChiTietHienVat?              @relation
+  ChiTietDiSanVanHoaPhiVatThe ChiTietDiSanVanHoaPhiVatThe?
+  ChiTietDiTich               ChiTietDiTich?
+  DsNoiDungDeNghiHoSo         NoiDungDeNghiHoSo[]
+  DonViPhongBanId             BigInt?
+  DonViPhongBan               DonViPhongBan?               @relation(fields: [DonViPhongBanId], references: [id])
+  TepDinhKem                  Tep?                         @relation("HoSoToTepDinhKem", fields: [TepDinhKemId], references: [id])
+
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+}
+
+model NoiDungDeNghiHoSo {
+  id               BigInt    @id @default(autoincrement())
+  NoiDungDeNghi    String?   @db.Text
+  TrangThai        String?   @db.VarChar(255)
+  ThoiGianThucHien DateTime?
+  DoUuTien         Int?
+  NguoiThucHienId  BigInt
+  HoSoId           BigInt
+
+  HoSo            HoSo      @relation(fields: [HoSoId], references: [id])
+  NguoiThucHien   NguoiDung @relation(fields: [NguoiThucHienId], references: [id])
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+}
+
+model BoSuuTap {
+  id                     BigInt                        @id @default(autoincrement())
+  TenBoSuuTap            String                        @db.VarChar(255)
+  TenHeThong             String                        @db.VarChar(255)
+  MoTa                   String?                       @db.Text
+  NoiDung                String?                       @db.Text
+  HoatDong               Int?                          @default(1)
+  ThoiGianTao            DateTime?                     @default(now())
+  ThoiGianCapNhat        DateTime?                     @updatedAt
+  TepId                  BigInt?                       @unique
+  Tep                    Tep?                          @relation(fields: [TepId], references: [id], onDelete: SetNull)
+  DsHienVat              ChiTietHienVat[]
+  DsDiSanVanHoaPhiVatThe ChiTietDiSanVanHoaPhiVatThe[]
+  DsDiTich               ChiTietDiTich[]
+}
+
+model ChiTietHienVat {
+  id                          BigInt                       @id @default(autoincrement())
+  TenHienVat                  String                       @db.VarChar(255)
+  TenHeThong                  String                       @db.VarChar(255)
+  TenKhoaHoc                  String?                      @db.VarChar(255)
+  TenKhac                     String?                      @db.VarChar(255)
+  TenTiengAnh                 String?                      @db.VarChar(255)
+  TenNgonNguKhac              String?                      @db.VarChar(255)
+  SoDangKy                    String                       @db.VarChar(255)
+  SoKiemKe                    String?                      @db.VarChar(255)
+  SoDangKyKhac                String?                      @db.VarChar(255)
+  QuyetDinhGiamDoc            String?                      @db.VarChar(255)
+  NgayQuyetDinhNhap           DateTime?
+  ThoiGianTiepNhan            DateTime?
+  ThoiGianDangKi              DateTime?
+  NguonGocId                  BigInt?
+  NguonGoc                    DanhMuc?                     @relation(name: "NguonGoc", fields: [NguonGocId], references: [id])
+  ThongTinChiTiet             String?                      @db.Text
+  SoLuong                     Int?                         @default(1)
+  DanhSachThanhPhan           Int?
+  ThoiKyId                    BigInt?
+  ThoiKy                      DanhMuc?                     @relation(name: "ThoiKy", fields: [ThoiKyId], references: [id])
+  NienDaiTuongDoi             String?                      @db.VarChar(255)
+  NienDaiTuyetDoi             String?                      @db.VarChar(255)
+  LoaiHienVatId               BigInt?
+  LoaiHienVat                 DanhMuc?                     @relation(name: "LoaiHienVat", fields: [LoaiHienVatId], references: [id])
+  ChatLieu                    String?                      @db.VarChar(255)
+  KichThuocChieuRong          Float?
+  KichThuocChieuDai           Float?
+  KichThuocChieuCao           Float?
+  DonViTinhKichThuocRong      BigInt?
+  DonViTinhKichThuocDai       BigInt?
+  DonViTinhKichThuocCao       BigInt?
+  KichThuocKhac               String?                      @db.VarChar(255)
+  TrongLuong                  Float?
+  DonViTinhTrongLuong         BigInt?
+  MieuTa                      String?                      @db.Text
+  DauTichDacBiet              String?                      @db.VarChar(255)
+  ChuDeId                     BigInt?
+  ChuDe                       DanhMuc?                     @relation(name: "ChuDe", fields: [ChuDeId], references: [id])
+  SuKienLienQuan              String?                      @db.VarChar(255)
+  SuuTapId                    BigInt?
+  SuuTap                      DanhMuc?                     @relation(name: "SuuTap", fields: [SuuTapId], references: [id])
+  BoSuuTapId                  BigInt?
+  BoSuuTap                    BoSuuTap?                    @relation(fields: [BoSuuTapId], references: [id], onDelete: SetNull)
+  NhanChungLienQuan           String?                      @db.VarChar(255)
+  ChuSoHuu                    String?                      @db.VarChar(255)
+  TacGia                      String?                      @db.VarChar(255)
+  NoiSanXuat                  String?                      @db.VarChar(255)
+  NoiDungLichSu               String?                      @db.Text
+  NoiDungKhac                 String?                      @db.Text
+  QuyenTacGia                 String?                      @db.VarChar(255)
+  QuyenLienQuan               String?                      @db.VarChar(255)
+  DieuKhoanThoaThuan          String?                      @db.Text
+  GiaTriBaoHiem               Float?
+  DonViTienTe                 BigInt?
+  SoQuyetDinhDinhGia          String?                      @db.VarChar(255)
+  NgayQuyetDinhDinhGia        DateTime?
+  LoaiBaoMatHienVatId         BigInt?
+  LoaiBaoMatHienVat           DanhMuc?                     @relation(name: "LoaiBaoMatHienVat", fields: [LoaiBaoMatHienVatId], references: [id])
+  TuLieuLienQuanId            BigInt?                      @unique
+  HinhAnh3DId                 BigInt?                      @unique
+  DuongDanHinhAnh3D           String?                      @db.VarChar(2000)
+  AmThanhMoTaId               BigInt?                      @unique
+  AmThanhMoTa                 Tep?                         @relation(name: "RelationToChiTietHienVatAmThanh", fields: [AmThanhMoTaId], references: [id], onDelete: SetNull)
+  DsHinhAnhHienVat            HinhAnhHienVat[]
+  TuLieuLienQuan              Tep?                         @relation(name: "RelationToChiTietHienVat", fields: [TuLieuLienQuanId], references: [id], onDelete: SetNull)
+  HinhAnh3D                   Tep?                         @relation(name: "RelationToChiTietHienVat3D", fields: [HinhAnh3DId], references: [id], onDelete: SetNull)
+  NguoiDungId                 BigInt?
+  NguoiDung                   NguoiDung?                   @relation(fields: [NguoiDungId], references: [id])
+  HoSoId                      BigInt?                      @unique
+  ChiTietDiTichId             BigInt?
+  ChiTietDiTich               ChiTietDiTich?               @relation(fields: [ChiTietDiTichId], references: [id])
+  HoSo                        HoSo?                        @relation(fields: [HoSoId], references: [id])
+  DonViPhongBanId             BigInt?
+  DonViPhongBan               DonViPhongBan?               @relation(fields: [DonViPhongBanId], references: [id], onDelete: SetNull)
+  TrangThaiLienQuan           Json?                        @db.JsonB
+  DsNhatKyHienVat             NhatKyHienVat[]
+  DsBaoQuanHienVat            BaoQuanHienVat[]
+  DsDiChuyenHienVat           DiChuyenHienVat[]
+  DsMuonTraHienVat            MuonTraHienVat[]
+  ChiTietPhieuMuonTraHienVats ChiTietPhieuMuonTraHienVat[]
+  ChiTietPhieuBaoQuanHienVats ChiTietPhieuBaoQuanHienVat[]
+  DsSuKienHienVat             SuKienHienVat[]
+  DsNoiDungHienVat            NoiDungHienVat[]
+  ThoiGianTao                 DateTime?                    @default(now())
+  ThoiGianCapNhat             DateTime?                    @updatedAt
+  danhMucId                   BigInt?
+}
+
+model HinhAnhHienVat {
+  id               BigInt  @id @default(autoincrement())
+  TenHinhAnh       String? @db.VarChar(255)
+  TenHeThong       String? @db.VarChar(255)
+  ChiTietHienVatId BigInt
+  TepId            BigInt? @unique
+
+  ChiTietHienVat ChiTietHienVat? @relation(fields: [ChiTietHienVatId], references: [id])
+  Tep            Tep?            @relation(fields: [TepId], references: [id], onDelete: SetNull)
+
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+}
+
+model NhatKyHienVat {
+  id               BigInt    @id @default(autoincrement()) // Primary key
+  NgayThucHien     DateTime? // Execution date
+  NoiDung          String? // Content
+  TrangThai        String?   @db.VarChar(255) // Status (enum values should be handled in application logic)
+  ChiTietHienVatId BigInt // Foreign key to DetailArtifact
+  NguoiDungId      BigInt // Foreign key to User
+
+  ChiTietHienVat ChiTietHienVat @relation(fields: [ChiTietHienVatId], references: [id])
+  NguoiDung      NguoiDung      @relation(fields: [NguoiDungId], references: [id])
+
+  ThoiGianTao     DateTime? @default(now()) // Creation timestamp
+  ThoiGianCapNhat DateTime? @updatedAt // Last updated timestamp
+}
+
+model BaoQuanHienVat {
+  id               BigInt    @id @default(autoincrement()) // Primary key
+  YeuCauBaoQuan    String?   @db.Text // Preservation requirement
+  PhanLoaiId       BigInt? // Classification (optional)
+  PhanLoai         DanhMuc?  @relation(name: "LoaiBaoQuanHienVat", fields: [PhanLoaiId], references: [id])
+  SoHoSoLienQuan   String?   @db.VarChar(255) // Related file (optional)
+  TinhTrangBaoQuan String?   @db.VarChar(255) // Preservation status (optional)
+  NgayBaoQuan      DateTime? // Preservation date
+  GhiChu           String?   @db.Text // Notes (optional)
+  QuyetDinh        String?   @db.VarChar(255)
+  ChiTietHienVatId BigInt // Foreign key to DetailArtifact
+  TepDinhKemId     BigInt?
+
+  ChiTietHienVat ChiTietHienVat @relation(fields: [ChiTietHienVatId], references: [id])
+  TepDinhKem     Tep?           @relation(fields: [TepDinhKemId], references: [id], onDelete: SetNull)
+
+  ThoiGianTao     DateTime? @default(now()) // Creation timestamp
+  ThoiGianCapNhat DateTime? @updatedAt // Last updated timestamp
+  danhMucId       BigInt?
+}
+
+model PhieuBaoQuanHienVat {
+  id               BigInt    @id @default(autoincrement()) // Primary key
+  YeuCauBaoQuan    String?   @db.Text // Preservation requirement
+  PhanLoaiId       BigInt? // Classification (optional)
+  PhanLoai         DanhMuc?  @relation(name: "LoaiPhieuBaoQuanHienVat", fields: [PhanLoaiId], references: [id])
+  SoHoSoLienQuan   String?   @db.VarChar(255) // Related file (optional)
+  TinhTrangBaoQuan String?   @db.Text // Preservation status (optional)
+  NgayBaoQuan      DateTime? // Preservation date
+  GhiChu           String?   @db.Text // Notes (optional)
+  QuyetDinh        String?   @db.VarChar(255)
+  TepDinhKemId     BigInt?
+
+  ChiTietPhieuBaoQuanHienVats ChiTietPhieuBaoQuanHienVat[] // Junction table relation
+  TepDinhKem                  Tep?                         @relation("PhieuBaoQuanHienVatToTep", fields: [TepDinhKemId], references: [id], onDelete: SetNull)
+
+  ThoiGianTao     DateTime? @default(now()) // Creation timestamp
+  ThoiGianCapNhat DateTime? @updatedAt // Last updated timestamp
+}
+
+model ChiTietPhieuBaoQuanHienVat {
+  id BigInt @id @default(autoincrement())
+
+  PhieuBaoQuanHienVatId BigInt
+  ChiTietHienVatId      BigInt
+
+  TinhTrang         String? @db.Text // Preservation condition
+  GhiChu            String? @db.Text // Notes
+  BieuHienHuHong    String? @db.Text // Signs of damage
+  PhuongPhapBaoQuan String? @db.Text // Preservation method
+
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  PhieuBaoQuanHienVat PhieuBaoQuanHienVat @relation(fields: [PhieuBaoQuanHienVatId], references: [id], onDelete: Cascade)
+  ChiTietHienVat      ChiTietHienVat      @relation(fields: [ChiTietHienVatId], references: [id])
+
+  @@index([PhieuBaoQuanHienVatId])
+  @@index([ChiTietHienVatId])
+}
+
+model DiChuyenHienVat {
+  id               BigInt   @id @default(autoincrement())
+  NgayDiChuyen     DateTime
+  TuViTri          String   @db.VarChar(255)
+  DenViTri         String   @db.VarChar(255)
+  DaDenNoi         Int?     @default(0)
+  QuyetDinh        String   @db.VarChar(255)
+  LoaiDiChuyenId   BigInt?
+  ChiTietHienVatId BigInt
+  TepDinhKemId     BigInt?
+
+  ChiTietHienVat ChiTietHienVat @relation(fields: [ChiTietHienVatId], references: [id])
+  LoaiDiChuyen   DanhMuc?       @relation(fields: [LoaiDiChuyenId], references: [id])
+  TepDinhKem     Tep?           @relation(fields: [TepDinhKemId], references: [id], onDelete: SetNull)
+
+  ThoiGianCapNhat DateTime? @updatedAt
+  ThoiGianTao     DateTime? @default(now())
+}
+
+model MuonTraHienVat {
+  id               BigInt   @id @default(autoincrement())
+  HoTen            String   @db.VarChar(255)
+  NhuCauSuDungId   BigInt
+  NgayMuon         DateTime
+  NguoiChoMuonId   BigInt
+  DonViId          BigInt?
+  NgayTra          String   @db.VarChar(255)
+  ChiTietHienVatId BigInt
+  GhiChu           String?  @db.Text
+  QuyetDinh        String?  @db.VarChar(255)
+  SoQuyetDinh      String?  @db.VarChar(255)
+  TepDinhKemId     BigInt?
+  DaTra            Int?     @default(0)
+
+  ChiTietHienVat ChiTietHienVat @relation(fields: [ChiTietHienVatId], references: [id])
+  DonVi          DanhMuc?       @relation(name: "MuonTraHienVatDonVi", fields: [DonViId], references: [id])
+  NguoiChoMuon   NguoiDung      @relation(fields: [NguoiChoMuonId], references: [id])
+  NhuCauSuDung   DanhMuc        @relation(name: "MuonTraHienVatNhuCauSuDung", fields: [NhuCauSuDungId], references: [id])
+  TepDinhKem     Tep?           @relation(fields: [TepDinhKemId], references: [id], onDelete: SetNull)
+
+  ThoiGianCapNhat DateTime? @updatedAt
+  ThoiGianTao     DateTime? @default(now())
+}
+
+model DonViPhongBan {
+  id               BigInt          @id @default(autoincrement())
+  Ten              String          @db.VarChar(255)
+  TenHeThong       String?         @db.VarChar(255)
+  HoatDong         Int             @default(1)
+  TamDinhChi       Int             @default(0)
+  TruongPhongId    BigInt?         @unique
+  TrucThuocId      BigInt?
+  ThoiGianTao      DateTime?       @default(now())
+  ThoiGianCapNhat  DateTime?       @updatedAt
+  HoSo             HoSo[]
+  TruongPhong      NguoiDung?      @relation("TruongPhong", fields: [TruongPhongId], references: [id], onDelete: SetNull)
+  TrucThuoc        DonViPhongBan?  @relation("TrucThuoc", fields: [TrucThuocId], references: [id], onDelete: Cascade)
+  DsNguoiDung      NguoiDung[]
+  DsDonViTrucThuoc DonViPhongBan[] @relation("TrucThuoc")
+
+  MuonTraDiTich MuonTraDiTich[] @relation("MuonTraDiTichToDonVi")
+
+  ChiTietHienVat ChiTietHienVat[]
+
+  ChiTietDiSanVanHoaPhiVatThe ChiTietDiSanVanHoaPhiVatThe[]
+
+  ChiTietDiTich ChiTietDiTich[]
+}
+
+model LuocDo {
+  id                     BigInt    @id @default(autoincrement()) // Primary key
+  LoaiSchema             String    @db.VarChar(255) // Schema type (e.g., user, artifact, etc.)
+  TenBang                String    @db.VarChar(255) // Table name
+  DsHam                  Json?     @db.JsonB // List of functions
+  MucDich                Json?     @db.JsonB // Purpose of the schema
+  LocMacDinh             Json?     @db.JsonB // Default filter conditions
+  DsQuyen                Json?     @db.JsonB // Permissions (import/export)
+  DsThuocTinh            Json      @db.JsonB // Property definitions
+  TrangThaiDaDuyet       Json?     @db.JsonB
+  LocTheoThoiDiemHienTai Boolean?  @default(false)
+  ThoiGianTao            DateTime? @default(now()) // Creation timestamp
+  ThoiGianCapNhat        DateTime? @updatedAt // Last updated timestamp
+}
+
+model CongViecNen {
+  id                 BigInt    @id @default(autoincrement())
+  LoaiCongViec       String
+  TongSoBanGhi       Int       @default(0)
+  SoLuongThatBai     Int       @default(0)
+  SoLuongThanhCong   Int       @default(0)
+  TrangThai          String
+  ThamSo             Json?     @db.JsonB
+  DuongDanTapTin     String?   @db.VarChar(2000)
+  TaiNguyen          String?
+  DuongDanTapTinLoi  String?   @db.VarChar(2000)
+  TenTapTin          String?
+  ThoiGianHetHan     BigInt
+  ThoiGianBatDauXuLy BigInt?
+  ThoiGianHoanThanh  BigInt?
+  SoLanThuLai        Int
+  NguoiTaoId         BigInt?
+  ThoiGianTao        DateTime? @default(now())
+  ThoiGianCapNhat    DateTime? @updatedAt
+
+  NguoiTao NguoiDung? @relation(fields: [NguoiTaoId], references: [id])
+}
+
+model NhomNoiDung {
+  id               BigInt  @id @default(autoincrement()) // Primary key
+  Ten              String
+  TenHeThong       String
+  ThuTuHienThi     Int
+  MoTa             String?
+  HoatDong         Int     @default(1) // Active status
+  NhomNoiDungChaId BigInt? // Parent category ID
+  TepId            BigInt?
+
+  DsNhomNoiDung  NhomNoiDung[] @relation("ContentCategoryToParent") // Child categories
+  NhomNoiDungCha NhomNoiDung?  @relation("ContentCategoryToParent", fields: [NhomNoiDungChaId], references: [id]) // Parent category
+  Tep            Tep?          @relation(fields: [TepId], references: [id])
+
+  ThoiGianTao       DateTime? @default(now()) // Creation timestamp
+  ThoiGianCapNhat   DateTime? @updatedAt // Last updated timestamp
+  DsNoiDung         NoiDung[] @relation("ContentToCategory") // Related content
+  DsTatCaNoiDungCon NoiDung[] @relation("ContentToCategoryGroup") // All child content in the group
+}
+
+model NoiDung {
+  id               BigInt    @id @default(autoincrement()) // Primary key
+  TieuDe           String
+  TieuDeHeThong    String
+  NoiDung          String?   @db.Text // Content body
+  TrangThai        String?   @db.VarChar(255) // Status (enum values handled in application logic)
+  GhiChuDuyet      String?   @db.Text // Approval notes
+  NoiDungDeNghi    String?   @db.Text // Request content
+  MoTa             String?   @db.Text // Description
+  TuKhoaLienQuan   Json?     @db.JsonB // Related keywords
+  DuongDanLienQuan Json?     @db.JsonB // Related link (object with `DuongDan` and `TieuDe`)
+  HoatDong         Int       @default(1) // Active status (numeric Int)
+  LuotXem          Int       @default(0) // View count
+  ThoiGianXuatBan  DateTime? // Publication time
+  NguoiTaoId       BigInt // Creator ID
+  AnhDaiDienId     BigInt?   @unique
+  NhomNoiDungId    BigInt? // Content category ID
+  NhomNoiDungGocId BigInt? // Content category group ID
+
+  NguoiTao       NguoiDung    @relation(fields: [NguoiTaoId], references: [id]) // Relation to User
+  AnhDaiDien     Tep?         @relation(fields: [AnhDaiDienId], references: [id], onDelete: SetNull) // Relation to File
+  NhomNoiDung    NhomNoiDung? @relation("ContentToCategory", fields: [NhomNoiDungId], references: [id]) // Relation to NhomNoiDung
+  NhomNoiDungGoc NhomNoiDung? @relation("ContentToCategoryGroup", fields: [NhomNoiDungGocId], references: [id])
+
+  ThoiGianTao                   DateTime?                     @default(now()) // Creation timestamp
+  ThoiGianCapNhat               DateTime?                     @updatedAt // Last updated timestamp
+  NoiDungDeNghiNoiDung          NoiDungDeNghiNoiDung[]
+  DsNoiDungHienVat              NoiDungHienVat[]
+  DsNoiDungDiTich               NoiDungDiTich[]
+  DsNoiDungDiSanVanHoaPhiVatThe NoiDungDiSanVanHoaPhiVatThe[]
+}
+
+enum EventApprovalStatus {
+  ban_nhap
+  da_duyet
+  cho_duyet
+  bi_tu_choi
+}
+
+model SuKien {
+  id               BigInt    @id @default(autoincrement())
+  TieuDe           String    @db.VarChar(255)
+  MoTa             String?   @db.Text
+  NoiDung          String    @db.Text
+  TrangThai        String    @default("ban_nhap")
+  NgayBatDau       DateTime
+  NgayKetThuc      DateTime
+  LapLaiSuKien     Int?
+  HoatDong         Int       @default(0)
+  ThuTuHienThi     Int
+  ThoiGianTao      DateTime? @default(now())
+  ThoiGianCapNhat  DateTime? @updatedAt
+  DuongDanBannerId BigInt?   @unique
+
+  DuongDanBanner Tep? @relation("RelationToSuKienBanner", fields: [DuongDanBannerId], references: [id], onDelete: SetNull)
+
+  DsSuKienHienVat              SuKienHienVat[]
+  DsSuKienDiTich               SuKienDiTich[]
+  DsSuKienDiSanVanHoaPhiVatThe SuKienDiSanVanHoaPhiVatThe[]
+  DsNoiDungDeNghiSuKien        NoiDungDeNghiSuKien[]
+}
+
+model NoiDungDeNghiSuKien {
+  id               BigInt    @id @default(autoincrement())
+  NoiDungDeNghi    String?   @db.Text
+  TrangThai        String    @db.VarChar(50)
+  ThoiGianThucHien DateTime?
+  DoUuTien         Int?
+  NguoiThucHienId  BigInt
+  SuKienId         BigInt
+  ThoiGianTao      DateTime? @default(now())
+  ThoiGianCapNhat  DateTime? @updatedAt
+
+  NguoiThucHien NguoiDung @relation("NoiDungDeNghiSuKienToNguoiDung", fields: [NguoiThucHienId], references: [id])
+  SuKien        SuKien    @relation(fields: [SuKienId], references: [id], onDelete: Cascade)
+
+  @@map("NoiDungDeNghiSuKien")
+}
+
+model NoiDungDeNghiNoiDung {
+  id               BigInt    @id @default(autoincrement())
+  NoiDungDeNghi    String?   @db.Text
+  GhiChuDuyet      String?   @db.Text
+  TrangThai        String?   @db.VarChar(50)
+  ThoiGianThucHien DateTime?
+  DoUuTien         Int?
+  NguoiThucHienId  BigInt
+  NoiDungId        BigInt
+  ThoiGianTao      DateTime? @default(now())
+  ThoiGianCapNhat  DateTime? @updatedAt
+
+  NoiDung       NoiDung    @relation(fields: [NoiDungId], references: [id])
+  NguoiThucHien NguoiDung? @relation(fields: [NguoiThucHienId], references: [id])
+}
+
+model SuKienHienVat {
+  id               BigInt    @id @default(autoincrement())
+  SuKienId         BigInt
+  ChiTietHienVatId BigInt
+  ThoiGianTao      DateTime? @default(now())
+  ThoiGianCapNhat  DateTime? @updatedAt
+
+  SuKien         SuKien         @relation(fields: [SuKienId], references: [id], onDelete: Cascade)
+  ChiTietHienVat ChiTietHienVat @relation(fields: [ChiTietHienVatId], references: [id], onDelete: Cascade)
+
+  @@unique([SuKienId, ChiTietHienVatId])
+}
+
+model SuKienDiTich {
+  id              BigInt    @id @default(autoincrement())
+  SuKienId        BigInt
+  ChiTietDiTichId BigInt
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  SuKien        SuKien        @relation(fields: [SuKienId], references: [id], onDelete: Cascade)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+
+  @@unique([SuKienId, ChiTietDiTichId])
+}
+
+model SuKienDiSanVanHoaPhiVatThe {
+  id                            BigInt    @id @default(autoincrement())
+  SuKienId                      BigInt
+  ChiTietDiSanVanHoaPhiVatTheId BigInt
+  ThoiGianTao                   DateTime? @default(now())
+  ThoiGianCapNhat               DateTime? @updatedAt
+
+  SuKien                      SuKien                      @relation(fields: [SuKienId], references: [id], onDelete: Cascade)
+  ChiTietDiSanVanHoaPhiVatThe ChiTietDiSanVanHoaPhiVatThe @relation(fields: [ChiTietDiSanVanHoaPhiVatTheId], references: [id], onDelete: Cascade)
+
+  @@unique([SuKienId, ChiTietDiSanVanHoaPhiVatTheId])
+}
+
+model NoiDungHienVat {
+  id               BigInt    @id @default(autoincrement())
+  NoiDungId        BigInt
+  ChiTietHienVatId BigInt
+  ThoiGianTao      DateTime? @default(now())
+  ThoiGianCapNhat  DateTime? @updatedAt
+
+  NoiDung        NoiDung        @relation(fields: [NoiDungId], references: [id], onDelete: Cascade)
+  ChiTietHienVat ChiTietHienVat @relation(fields: [ChiTietHienVatId], references: [id], onDelete: Cascade)
+
+  @@unique([NoiDungId, ChiTietHienVatId])
+}
+
+model NoiDungDiTich {
+  id              BigInt    @id @default(autoincrement())
+  NoiDungId       BigInt
+  ChiTietDiTichId BigInt
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  NoiDung       NoiDung       @relation(fields: [NoiDungId], references: [id], onDelete: Cascade)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+
+  @@unique([NoiDungId, ChiTietDiTichId])
+}
+
+model NoiDungDiSanVanHoaPhiVatThe {
+  id                            BigInt    @id @default(autoincrement())
+  NoiDungId                     BigInt
+  ChiTietDiSanVanHoaPhiVatTheId BigInt
+  ThoiGianTao                   DateTime? @default(now())
+  ThoiGianCapNhat               DateTime? @updatedAt
+
+  NoiDung                     NoiDung                     @relation(fields: [NoiDungId], references: [id], onDelete: Cascade)
+  ChiTietDiSanVanHoaPhiVatThe ChiTietDiSanVanHoaPhiVatThe @relation(fields: [ChiTietDiSanVanHoaPhiVatTheId], references: [id], onDelete: Cascade)
+
+  @@unique([NoiDungId, ChiTietDiSanVanHoaPhiVatTheId])
+}
+
+model DiSanVanHoaPhiVatTheDanhMuc {
+  id                            BigInt    @id @default(autoincrement())
+  ChiTietDiSanVanHoaPhiVatTheId BigInt
+  DanhMucId                     BigInt
+  ThoiGianTao                   DateTime? @default(now())
+  ThoiGianCapNhat               DateTime? @updatedAt
+
+  ChiTietDiSanVanHoaPhiVatThe ChiTietDiSanVanHoaPhiVatThe @relation(fields: [ChiTietDiSanVanHoaPhiVatTheId], references: [id], onDelete: Cascade)
+  DanhMuc                     DanhMuc                     @relation(fields: [DanhMucId], references: [id], onDelete: Cascade)
+
+  @@unique([ChiTietDiSanVanHoaPhiVatTheId, DanhMucId])
+}
+
+model BaoCao {
+  id               BigInt    @id @default(autoincrement())
+  Ten              String    @db.Text
+  TenHeThong       String    @db.Text
+  MoTa             String?   @db.Text
+  LoaiLuocDo       String
+  MauNoiDungBaoCao String
+  LocMacDinh       Json?     @db.JsonB
+  DuLieuMacDinh    Json?     @db.JsonB
+  ThoiGianTao      DateTime? @default(now())
+  ThoiGianCapNhat  DateTime? @updatedAt
+}
+
+model ThongBao {
+  id              BigInt    @id @default(autoincrement())
+  TieuDe          String    @db.VarChar(255)
+  NoiDung         String    @db.Text
+  LoaiThongBao    String    @db.VarChar(100)
+  NguoiThucHienId BigInt
+  DoiTuong        Json?     @db.JsonB
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  NguoiThucHien       NguoiDung           @relation(fields: [NguoiThucHienId], references: [id])
+  DsThongBaoNguoiDung ThongBaoNguoiDung[]
+}
+
+model ThongBaoNguoiDung {
+  id              BigInt    @id @default(autoincrement())
+  ThongBaoId      BigInt
+  NguoiDungId     BigInt
+  TrangThai       String    @db.VarChar(50) // read, unread
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  ThongBao  ThongBao  @relation(fields: [ThongBaoId], references: [id], onDelete: Cascade)
+  NguoiDung NguoiDung @relation(fields: [NguoiDungId], references: [id], onDelete: Cascade)
+
+  @@unique([ThongBaoId, NguoiDungId])
+}
+
+model ChiTietDiSanVanHoaPhiVatThe {
+  id                            BigInt    @id @default(autoincrement())
+  TenDiSan                      String    @db.VarChar(255)
+  TenTiengAnh                   String?   @db.VarChar(255)
+  TenNgonNguKhac                String?   @db.VarChar(255)
+  TenKhac                       String?   @db.VarChar(255)
+  MoTa                          String?   @db.Text
+  MoTaNgan                      String?   @db.Text
+  DiaChiCuThe                   String?   @db.Text
+  NhungNguoiDaiDien             String?   @db.Text
+  CacThanhVien                  String?   @db.Text
+  GiaTriDiSanVanHoaPhiVatThe    String?   @db.Text
+  HienTrangDiSanVanHoaPhiVatThe String?   @db.Text
+  CacBienPhapBaoVe              String?   @db.Text
+  SoQuyetDinh                   String    @db.VarChar(255)
+  NoiQuyetDinh                  String?   @db.VarChar(255)
+  NgayQuyetDinh                 DateTime?
+  QuyetDinhCongBo               String?   @db.VarChar(255)
+  TrangThaiUnesco               Int?      @default(0) // 0: Chua xet, 1: Da xet, 2: Tu choi
+  DiaDiemCuThe                  String?   @db.Text
+  SuKienToChucHangNam           String?   @db.Text
+  NguoiVietLyLich               Json?     @db.JsonB // Array of strings
+  DsGhiDanh                     Json?     @db.JsonB // Array of strings
+  NoiDung                       String?   @db.Text
+  ThoiGianTao                   DateTime? @default(now())
+  ThoiGianCapNhat               DateTime? @updatedAt
+
+  // Foreign keys
+  XaPhuongId    BigInt?
+  XaPhuongCuId  BigInt?
+  QuanHuyenCuId BigInt?
+  TinhThanhId   BigInt?
+  TinhThanhCuId BigInt?
+  LoaiDiSanId   BigInt?
+  HoSoId        BigInt? @unique
+  AnhDaiDienId  BigInt? @unique
+  AmThanhMoTaId BigInt? @unique
+  NguoiDungId   BigInt?
+
+  // Relations
+  XaPhuong                      DanhMuc?                      @relation("DiSanVanHoaPhiVatTheToXaPhuong", fields: [XaPhuongId], references: [id])
+  TinhThanh                     DanhMuc?                      @relation("DiSanVanHoaPhiVatTheToTinhThanh", fields: [TinhThanhId], references: [id])
+  TinhThanhCu                   DanhMuc?                      @relation("DiSanVanHoaPhiVatTheToTinhThanhCu", fields: [TinhThanhCuId], references: [id])
+  QuanHuyenCu                   DanhMuc?                      @relation("DiSanVanHoaPhiVatTheToQuanHuyenCu", fields: [QuanHuyenCuId], references: [id])
+  XaPhuongCu                    DanhMuc?                      @relation("DiSanVanHoaPhiVatTheToXaPhuongCu", fields: [XaPhuongCuId], references: [id])
+  LoaiDiSan                     DanhMuc?                      @relation("DiSanVanHoaPhiVatTheToLoaiDiSan", fields: [LoaiDiSanId], references: [id])
+  HoSo                          HoSo?                         @relation(fields: [HoSoId], references: [id])
+  AnhDaiDien                    Tep?                          @relation("DiSanVanHoaPhiVatTheToAnhDaiDien", fields: [AnhDaiDienId], references: [id], onDelete: SetNull)
+  AmThanhMoTa                   Tep?                          @relation("DiSanVanHoaPhiVatTheToAmThanhMoTa", fields: [AmThanhMoTaId], references: [id], onDelete: SetNull)
+  NguoiDung                     NguoiDung?                    @relation(fields: [NguoiDungId], references: [id])
+  DonViPhongBanId               BigInt?
+  DonViPhongBan                 DonViPhongBan?                @relation(fields: [DonViPhongBanId], references: [id], onDelete: SetNull)
+  // Has many relations
+  DsTuLieuLienQuan              TuLieuLienQuanDiSanVanHoa[]
+  DsNhatKiDiSanVanHoa           NhatKiDiSanVanHoaPhiVatThe[]
+  DsSuKienDiSanVanHoaPhiVatThe  SuKienDiSanVanHoaPhiVatThe[]
+  DsDiSanVanHoaPhiVatTheDanhMuc DiSanVanHoaPhiVatTheDanhMuc[]
+  DsNoiDungDiSanVanHoaPhiVatThe NoiDungDiSanVanHoaPhiVatThe[]
+  DsQuanLyNgheNhan              QuanLyNgheNhan[]
+  BoSuuTapId                    BigInt?
+  BoSuuTap                      BoSuuTap?                     @relation(fields: [BoSuuTapId], references: [id], onDelete: SetNull)
+}
+
+model NhatKiDiSanVanHoaPhiVatThe {
+  id              BigInt    @id @default(autoincrement())
+  NgayThucHien    DateTime?
+  NoiDung         String?   @db.Text
+  TrangThai       String?   @db.VarChar(255)
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  // Foreign keys
+  ChiTietDiSanVanHoaPhiVatTheId BigInt
+  NguoiDungId                   BigInt
+
+  // Relations
+  ChiTietDiSanVanHoaPhiVatThe ChiTietDiSanVanHoaPhiVatThe @relation(fields: [ChiTietDiSanVanHoaPhiVatTheId], references: [id])
+  NguoiDung                   NguoiDung                   @relation("NhatKiDiSanVanHoaPhiVatTheToNguoiDung", fields: [NguoiDungId], references: [id])
+}
+
+model TuLieuLienQuanDiSanVanHoa {
+  id              BigInt    @id @default(autoincrement())
+  TenTuLieu       String?   @db.VarChar(255)
+  DuongDan        String?   @db.VarChar(2000)
+  LoaiTuLieu      String?   @db.VarChar(255) // e.g., image, video, document
+  TenHeThong      String?   @db.VarChar(255)
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  // Foreign keys
+  ChiTietDiSanVanHoaPhiVatTheId BigInt
+  TepId                         BigInt?
+
+  // Relations
+  ChiTietDiSanVanHoaPhiVatThe ChiTietDiSanVanHoaPhiVatThe @relation(fields: [ChiTietDiSanVanHoaPhiVatTheId], references: [id])
+  Tep                         Tep?                        @relation("TuLieuLienQuanDiSanVanHoaToTep", fields: [TepId], references: [id], onDelete: SetNull)
+}
+
+model QuanLyNgheNhan {
+  id              BigInt    @id @default(autoincrement())
+  TenNgheNhan     String    @db.VarChar(255) // Tên nghề nhân
+  HoTen           String    @db.VarChar(255) // Họ và tên nghệ nhân
+  NgaySinh        DateTime? // Ngày sinh
+  NoiSinh         String?   @db.VarChar(500) // Nơi sinh
+  GioiTinh        String?   @db.VarChar(10) // Giới tính (Nam/Nữ)
+  SoDienThoai     String?   @db.VarChar(20) // Số điện thoại
+  DiaChi          String?   @db.Text // Địa chỉ hiện tại
+  TrinhDoHocVan   String?   @db.VarChar(100) // Trình độ học vấn
+  KinhNghiem      String?   @db.Text // Kinh nghiệm và kỹ năng
+  ThanhTichNoiBat String?   @db.Text // Thành tích nổi bật
+  QuaTrinhDaoTao  String?   @db.Text // Quá trình đào tạo
+  CacGiaiThuong   String?   @db.Text // Các giải thưởng đã nhận
+  MoTaKyNang      String?   @db.Text // Mô tả kỹ năng nghề
+  VaiTro          String?   @db.VarChar(100) // Vai trò trong di sản (Thầy dạy nghề, nghệ nhân truyền thống, ...)
+  GhiChu          String?   @db.Text // Ghi chú khác
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  // Foreign keys
+  ChiTietDiSanVanHoaPhiVatTheId BigInt?
+  AnhDaiDienId                  BigInt? @unique // Ảnh đại diện của nghệ nhân
+
+  // Relations
+  ChiTietDiSanVanHoaPhiVatThe ChiTietDiSanVanHoaPhiVatThe? @relation(fields: [ChiTietDiSanVanHoaPhiVatTheId], references: [id], onDelete: Cascade)
+  AnhDaiDien                  Tep?                         @relation("QuanLyNgheNhanToAnhDaiDien", fields: [AnhDaiDienId], references: [id], onDelete: SetNull)
+}
+
+model MauBaoCaoMacDinh {
+  id                       BigInt          @id @default(autoincrement())
+  PhienBan                 BigInt          @default(autoincrement())
+  TaiNguyen                String          @db.VarChar(255)
+  LoaiLuocDo               String          @db.VarChar(255)
+  CongThuc                 String          @db.Text
+  PhuongThuc               String          @db.VarChar(255)
+  NoiDung                  String          @db.Text
+  DsDinhNghiaDuLieuMacDinh Json            @db.JsonB
+  ThoiGianTao              DateTime?       @default(now())
+  ThoiGianCapNhat          DateTime?       @updatedAt
+  CauHinhBaoCao            CauHinhBaoCao[]
+}
+
+model CauHinhBaoCao {
+  id                       BigInt    @id @default(autoincrement())
+  Ten                      String    @db.VarChar(255)
+  TenHeThong               String    @unique @db.VarChar(255)
+  MoTa                     String?   @db.Text
+  CongThuc                 String    @db.Text
+  PhuongThuc               String    @db.VarChar(255)
+  NoiDung                  String    @db.Text
+  DsDinhNghiaDuLieuMacDinh Json      @db.JsonB
+  DuLieuMacDinh            Json?     @db.JsonB
+  DsThuocTinh              Json      @db.JsonB
+  LocMacDinh               Json?     @db.JsonB
+  TaiNguyen                String    @db.VarChar(255)
+  LoaiLuocDo               String    @db.VarChar(255)
+  BoQuaGhiLog              Boolean?  @default(false)
+  ThoiGianTao              DateTime? @default(now())
+  ThoiGianCapNhat          DateTime? @updatedAt
+
+  MauBaoCaoMacDinhId BigInt
+  MauBaoCaoMacDinh   MauBaoCaoMacDinh? @relation(fields: [MauBaoCaoMacDinhId], references: [id])
+}
+
+// Bảng chi tiết di tích chính
+model ChiTietDiTich {
+  id              BigInt    @id @default(autoincrement())
+  TenDiTich       String    @db.VarChar(255)
+  TenKhac         String?   @db.VarChar(500)
+  TenNgonNguKhac  String?   @db.VarChar(255)
+  LyLichDiTich    String?   @db.Text
+  DiaChiCuThe     String?   @db.Text
+  KinhDo          String?   @db.VarChar(50)
+  ViDo            String?   @db.VarChar(50)
+  CaoDo           String?   @db.VarChar(50)
+  MoTa            String?   @db.Text
+  MoTaNgan        String?   @db.Text
+  NgayQuyetDinh   DateTime?
+  SoQuyetDinh     String?   @db.VarChar(255)
+  NienDai         String?   @db.VarChar(255)
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+  DsHang          Json?     @db.JsonB // Array of strings
+
+  // Foreign keys
+  LoaiDiTichId      BigInt?
+  TinhThanhId       BigInt?
+  XaPhuongId        BigInt?
+  QuanHuyenCuId     BigInt?
+  TinhThanhCuId     BigInt?
+  XaPhuongCuId      BigInt?
+  HoSoId            BigInt? @unique
+  NguoiDungId       BigInt?
+  ThoiKyId          BigInt?
+  VatLieuId         BigInt?
+  CoQuanQuanLyId    BigInt?
+  HinhAnh3DId       BigInt? @unique
+  VanBanQuyetDinhId BigInt? @unique
+  AmThanhMoTaId     BigInt?
+  DuongDanHinhAnh3D String? @db.VarChar(2000)
+
+  // Relations
+  LoaiDiTich      DanhMuc?       @relation("DiTichToLoaiDiTich", fields: [LoaiDiTichId], references: [id], onDelete: SetNull)
+  TinhThanh       DanhMuc?       @relation("DiTichToTinhThanh", fields: [TinhThanhId], references: [id], onDelete: SetNull)
+  XaPhuong        DanhMuc?       @relation("DiTichToXaPhuong", fields: [XaPhuongId], references: [id], onDelete: SetNull)
+  QuanHuyenCu     DanhMuc?       @relation("DiTichToQuanHuyenCu", fields: [QuanHuyenCuId], references: [id], onDelete: SetNull)
+  TinhThanhCu     DanhMuc?       @relation("DiTichToTinhThanhCu", fields: [TinhThanhCuId], references: [id], onDelete: SetNull)
+  XaPhuongCu      DanhMuc?       @relation("DiTichToXaPhuongCu", fields: [XaPhuongCuId], references: [id], onDelete: SetNull)
+  ThoiKy          DanhMuc?       @relation("DiTichToThoiKy", fields: [ThoiKyId], references: [id], onDelete: SetNull)
+  VatLieu         DanhMuc?       @relation("DiTichToVatLieu", fields: [VatLieuId], references: [id], onDelete: SetNull)
+  CoQuanQuanLy    DanhMuc?       @relation("DiTichToCoQuanQuanLy", fields: [CoQuanQuanLyId], references: [id], onDelete: SetNull)
+  HoSo            HoSo?          @relation(fields: [HoSoId], references: [id])
+  NguoiDung       NguoiDung?     @relation(fields: [NguoiDungId], references: [id])
+  DonViPhongBanId BigInt?
+  DonViPhongBan   DonViPhongBan? @relation(fields: [DonViPhongBanId], references: [id], onDelete: SetNull)
+  HinhAnh3D       Tep?           @relation("DiTichToHinhAnh3D", fields: [HinhAnh3DId], references: [id], onDelete: SetNull)
+  AmThanhMoTa     Tep?           @relation("DiTichToAmThanhMoTa", fields: [AmThanhMoTaId], references: [id], onDelete: SetNull)
+  VanBanQuyetDinh Tep?           @relation("DiTichToVanBanQuyetDinh", fields: [VanBanQuyetDinhId], references: [id], onDelete: SetNull)
+
+  // Has many relations
+  DsHangDiTich                      HangDiTich[]
+  DsNoiDungDiTich                   NoiDungDiTich[]
+  DsDiTichThanhPhan                 DiTichThanhPhan[]
+  DsQuyHoachDiTich                  QuyHoachDiTich[]
+  DsKhachThamQuanDiTich             KhachThamQuanDiTich[]
+  DsKhoanhVungDiTich                KhoanhVungDiTich[]
+  DsDuAnBaoQuanDiTich               DuAnBaoQuanDiTich[]
+  DsThamDoKhaoCoDiTich              ThamDoKhaoCoDiTich[]
+  DsTaiLieuHanNomDiTich             TaiLieuHanNomDiTich[]
+  DsAnhDiTich                       AnhDiTich[]
+  DsVideoGhiAmDiTich                VideoGhiAmDiTich[]
+  DsNhatKyDiTich                    NhatKyDiTich[]
+  DsBanDoChiDanDiTich               BanDoChiDanDiTich[]
+  DsNguonVonDauTuDiTich             NguonVonDauTuDiTich[]
+  DsDonDeNghiXepHangDiTich          DonDeNghiXepHangDiTich[]
+  DsKiemTraXuLyViPhamDiTich         KiemTraXuLyViPhamDiTich[]
+  DsLyLichDiTich                    LyLichDiTich[]
+  DsMuonTraDiTich                   MuonTraDiTich[]
+  DsBanVeKyThuatDiTich              BanVeKyThuatDiTich[]
+  DsTuSuaCapThietDiTich             TuSuaCapThietDiTich[]
+  DsBanQuyetDinhXepHangDiTich       BanQuyetDinhXepHangDiTich[]
+  DsThietKeBaoQuanDiTich            ThietKeBaoQuanDiTich[]
+  DsNguonThuTaiDiTich               NguonThuTaiDiTich[]
+  KhoanhVungDiTichThanhPhan         KhoanhVungDiTichThanhPhan[]
+  DsHienVat                         ChiTietHienVat[]
+  KhoanhVungDiTichThanhPhanRelation KhoanhVungDiTichThanhPhan[] @relation("KhoanhVungDiTichThanhPhanToDiTichThanhPhan")
+  DsSuKienDiTich                    SuKienDiTich[]
+  BoSuuTapId                        BigInt?
+  BoSuuTap                          BoSuuTap?                   @relation(fields: [BoSuuTapId], references: [id], onDelete: SetNull)
+  DiemBanDoDiTich                   DiemBanDoDiTich[]
+}
+
+// Bảng hạng di tích
+model HangDiTich {
+  id                         BigInt    @id @default(autoincrement())
+  SoQuyetDinh                String    @db.VarChar(100)
+  SoQuyetDinhGhiDanhBoSung   String?   @db.VarChar(100)
+  SoQuyetDinhThayThe         String?   @db.VarChar(100)
+  SoQuyetDinhHuyBo           String?   @db.VarChar(100)
+  NgayGhiDanh                DateTime?
+  NgayQuyetDinh              DateTime?
+  NgayQuyetDinhGhiDanhBoSung DateTime?
+  NgayQuyetDinhThayThe       DateTime?
+  NgayQuyetDinhHuyBo         DateTime?
+  ThoiGianTao                DateTime? @default(now())
+  ThoiGianCapNhat            DateTime? @updatedAt
+
+  // Foreign keys
+  ChiTietDiTichId   BigInt
+  LoaiHangId        BigInt
+  VanBanQuyetDinhId BigInt? @unique
+
+  // Relations
+  VanBanQuyetDinh Tep?          @relation("HangDiTichToVanBanQuyetDinh", fields: [VanBanQuyetDinhId], references: [id], onDelete: SetNull)
+  ChiTietDiTich   ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+  LoaiHang        DanhMuc       @relation("HangDiTichToLoaiHang", fields: [LoaiHangId], references: [id])
+}
+
+// Bảng di tích thành phần
+model DiTichThanhPhan {
+  id                 BigInt    @id @default(autoincrement())
+  TenDiTichThanhPhan String    @db.VarChar(255)
+  SoQuyetDinh        String?   @db.VarChar(100)
+  NgayQuyetDinh      String?   @db.VarChar(50)
+  NienDai            String?   @db.VarChar(255)
+  KinhDo             String?   @db.VarChar(50)
+  ViDo               String?   @db.VarChar(50)
+  CaoDo              String?   @db.VarChar(50)
+  DiaDiem            String?   @db.Text
+  ThoiGianTao        DateTime? @default(now())
+  ThoiGianCapNhat    DateTime? @updatedAt
+
+  // Foreign keys
+  LoaiDiTichId    BigInt?
+  VatLieuId       BigInt?
+  ThoiKyId        BigInt?
+  ChiTietDiTichId BigInt?
+
+  // Relations
+  LoaiDiTich    DanhMuc?       @relation("DiTichThanhPhanToLoaiDiTich", fields: [LoaiDiTichId], references: [id])
+  VatLieu       DanhMuc?       @relation("DiTichThanhPhanToChatLieu", fields: [VatLieuId], references: [id])
+  ThoiKy        DanhMuc?       @relation("DiTichThanhPhanToThoiKy", fields: [ThoiKyId], references: [id])
+  ChiTietDiTich ChiTietDiTich? @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+// Bảng nhật ký di tích
+model NhatKyDiTich {
+  id              BigInt    @id @default(autoincrement())
+  NgayThucHien    DateTime?
+  NoiDung         String?   @db.Text
+  TrangThai       String?   @db.VarChar(255)
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  // Foreign keys
+  NguoiDungId     BigInt
+  ChiTietDiTichId BigInt
+
+  // Relations
+  NguoiDung     NguoiDung     @relation("NhatKyDiTichToNguoiDung", fields: [NguoiDungId], references: [id])
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+// Bảng quy hoạch di tích
+model QuyHoachDiTich {
+  id               BigInt    @id @default(autoincrement())
+  ThuMucLuuTru     String?   @db.VarChar(255)
+  MaSo             String?   @db.VarChar(100)
+  TenQuyHoach      String?   @db.VarChar(255)
+  CoQuanToChuc     String?   @db.VarChar(255)
+  DoiViTuVanLapDon String?   @db.VarChar(255)
+  ChuDauTu         String?   @db.VarChar(255)
+  CoQuanThamDinh   String?   @db.VarChar(255)
+  CoQuanPheDuyet   String?   @db.VarChar(255)
+  ThoiGianPheDuyet DateTime?
+  SoVanBanPheDuyet String?   @db.VarChar(100)
+  LoaiQuyHoachId   BigInt
+  ThoiGianTao      DateTime? @default(now())
+  ThoiGianCapNhat  DateTime? @updatedAt
+
+  // Foreign keys
+  ChiTietDiTichId BigInt
+  TepId           BigInt?
+
+  // Relations
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+  Tep           Tep?          @relation("QuyHoachDiTichToTep", fields: [TepId], references: [id], onDelete: SetNull)
+}
+
+// Bảng khách tham quan di tích
+model KhachThamQuanDiTich {
+  id              BigInt    @id @default(autoincrement())
+  Nam             Int?
+  SoTreEm         Int?
+  SoNguoiCaoTuoi  Int?
+  SoKhachKhac     Int?
+  SoKhachQuocTe   Int?
+  TongSo          Int?
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  // Foreign keys
+  ChiTietDiTichId BigInt
+
+  // Relations
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+// Bảng khoanh vùng di tích
+model KhoanhVungDiTich {
+  id              BigInt    @id @default(autoincrement())
+  ThuMucLuuTru    String?   @db.VarChar(255)
+  DonViLap        String?   @db.VarChar(255)
+  NamLap          Int?
+  KhuVucI         Int?
+  KhuVucII        Int?
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  // Foreign keys
+  LoaiKhoanhVungId BigInt?
+  TepId            BigInt?
+  PhanLoaiId       BigInt?
+  ChiTietDiTichId  BigInt
+
+  // Relations
+  PhanLoai      DanhMuc?      @relation("KhoanhVungDiTichToPhanLoai", fields: [PhanLoaiId], references: [id])
+  Tep           Tep?          @relation("KhoanhVungDiTichToTep", fields: [TepId], references: [id], onDelete: SetNull)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+// Bảng dự án bảo quản di tích
+model DuAnBaoQuanDiTich {
+  id               BigInt    @id @default(autoincrement())
+  ThuMucLuuTru     String?   @db.VarChar(255)
+  MaSo             String?   @db.VarChar(100)
+  TenDuAn          String?   @db.VarChar(255)
+  CoQuanToChuc     String?   @db.VarChar(255)
+  DiaDiem          String?   @db.Text
+  ChuDauTu         String?   @db.VarChar(255)
+  CoQuanThamDinh   String?   @db.VarChar(255)
+  CoQuanPheDuyet   String?   @db.VarChar(255)
+  KinhPhi          Decimal?  @db.Decimal(15, 2)
+  ThoiGianPheDuyet DateTime?
+  SoVanBanPheDuyet String?   @db.VarChar(100)
+  ThoiGianTao      DateTime? @default(now())
+  ThoiGianCapNhat  DateTime? @updatedAt
+
+  // Foreign keys
+  TepId           BigInt?
+  ChiTietDiTichId BigInt
+
+  // Relations
+  Tep           Tep?          @relation("DuAnBaoQuanDiTichToTep", fields: [TepId], references: [id], onDelete: SetNull)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+// Bảng thăm dò khảo cổ di tích
+model ThamDoKhaoCoDiTich {
+  id              BigInt    @id @default(autoincrement())
+  SoQuyetDinh     String?   @db.VarChar(100)
+  NgayQuyetDinh   String?   @db.VarChar(50)
+  BaoCaoSoBoId    BigInt?   @unique
+  BaoCaoKhoaHocId BigInt?   @unique
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  // Foreign keys
+  ChiTietDiTichId BigInt
+  BaoCaoSoBo      Tep?   @relation("ThamDoKhaoCoDiTichToBaoCaoSoBo", fields: [BaoCaoSoBoId], references: [id], onDelete: SetNull)
+  BaoCaoKhoaHoc   Tep?   @relation("ThamDoKhaoCoDiTichToBaoCaoKhoaHoc", fields: [BaoCaoKhoaHocId], references: [id], onDelete: SetNull)
+
+  // Relations
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+// Bảng tài liệu Hán Nôm di tích
+model TaiLieuHanNomDiTich {
+  id              BigInt    @id @default(autoincrement())
+  ThuMucLuuTru    String?   @db.VarChar(255)
+  MaSo            String?   @db.VarChar(100)
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  // Foreign keys
+  TepId           BigInt?
+  ChiTietDiTichId BigInt
+
+  // Relations
+  Tep           Tep?          @relation("TaiLieuHanNomDiTichToTep", fields: [TepId], references: [id], onDelete: SetNull)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+// Bảng ảnh di tích
+model AnhDiTich {
+  id              BigInt    @id @default(autoincrement())
+  NguoiChup       String?   @db.VarChar(255)
+  MaSo            String?   @db.VarChar(100)
+  ThoiGianChup    DateTime?
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  // Foreign keys
+  TepId           BigInt
+  ChiTietDiTichId BigInt
+  LoaiHinhAnhId   BigInt?
+
+  // Relations
+  Tep           Tep           @relation("AnhDiTichToTep", fields: [TepId], references: [id])
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+  LoaiHinhAnh   DanhMuc?      @relation(fields: [LoaiHinhAnhId], references: [id])
+}
+
+// Bảng video ghi âm di tích
+model VideoGhiAmDiTich {
+  id              BigInt    @id @default(autoincrement())
+  NguoiThucHien   String?   @db.VarChar(255)
+  NgayThucHien    DateTime?
+  ThuMucLuuTru    String?   @db.VarChar(255)
+  MaSo            String?   @db.VarChar(100)
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  // Foreign keys
+  TepId           BigInt
+  ChiTietDiTichId BigInt
+
+  // Relations
+  Tep           Tep           @relation("VideoGhiAmDiTichToTep", fields: [TepId], references: [id])
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+model BanDoChiDanDiTich {
+  id              BigInt    @id @default(autoincrement())
+  ThuMucLuuTru    String?   @db.VarChar(255)
+  MaSo            String?   @db.VarChar(100)
+  DonViLap        String?   @db.VarChar(255)
+  TenBanDo        String?   @db.VarChar(500)
+  NamLap          Int?
+  TepId           BigInt?
+  ChiTietDiTichId BigInt
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  Tep           Tep?          @relation("BanDoChiDanDiTichToTep", fields: [TepId], references: [id], onDelete: SetNull)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+model NguonVonDauTuDiTich {
+  id                BigInt    @id @default(autoincrement())
+  Nam               BigInt?
+  NganSachTrungUong BigInt?
+  NganSachDiaPhuong BigInt?
+  NguonThuXaHoiKhac BigInt?
+  NguonThuKhac      BigInt?
+  TongSo            BigInt?
+  TepId             BigInt?
+  ChiTietDiTichId   BigInt
+  ThoiGianTao       DateTime? @default(now())
+  ThoiGianCapNhat   DateTime? @updatedAt
+
+  Tep           Tep?          @relation("NguonVonDauTuDiTichToTep", fields: [TepId], references: [id], onDelete: SetNull)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+model DonDeNghiXepHangDiTich {
+  id              BigInt    @id @default(autoincrement())
+  ThuMucLuuTru    String?   @db.VarChar(255)
+  DoiTuongBanHanh String?   @db.VarChar(255)
+  NgayBanHanh     DateTime?
+  TepId           BigInt?
+  ChiTietDiTichId BigInt
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  Tep           Tep?          @relation("DonDeNghiXepHangDiTichToTep", fields: [TepId], references: [id], onDelete: SetNull)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+model KiemTraXuLyViPhamDiTich {
+  id             BigInt  @id @default(autoincrement())
+  ThoiGian       String? @db.VarChar(255)
+  ThuMucLuuTru   String? @db.VarChar(255)
+  CoQuanThucHien String? @db.VarChar(255)
+
+  NoiDungKiemTra  String?   @db.VarChar(255)
+  KetQuaKiemTra   String?   @db.VarChar(255)
+  VanDeGiaiQuyet  String?   @db.VarChar(255)
+  TepId           BigInt?
+  LoaiKiemTraId   BigInt?
+  ChiTietDiTichId BigInt
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  Tep           Tep?          @relation("KiemTraXuLyViPhamDiTichToTep", fields: [TepId], references: [id], onDelete: SetNull)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+model LyLichDiTich {
+  id              BigInt    @id @default(autoincrement())
+  ThuMucLuuTru    String?   @db.VarChar(255)
+  TepId           BigInt?
+  ChiTietDiTichId BigInt
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  Tep           Tep?          @relation("LyLichDiTichToTep", fields: [TepId], references: [id], onDelete: SetNull)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+model MuonTraDiTich {
+  id              BigInt    @id @default(autoincrement())
+  HoTen           String?   @db.VarChar(255)
+  NhuCauSuDung    String?   @db.VarChar(255)
+  NgayMuon        DateTime?
+  NgayTra         String?   @db.VarChar(255)
+  ChiTietDiTichId BigInt
+  DonViId         BigInt
+  NguoiChoMuonId  BigInt
+  GhiChu          String?   @db.Text
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+  DonVi         DonViPhongBan @relation("MuonTraDiTichToDonVi", fields: [DonViId], references: [id])
+  NguoiChoMuon  NguoiDung     @relation("MuonTraDiTichToNguoiChoMuon", fields: [NguoiChoMuonId], references: [id])
+}
+
+model BanVeKyThuatDiTich {
+  id              BigInt    @id @default(autoincrement())
+  ThuMucLuuTru    String?   @db.VarChar(255)
+  MaSo            String?   @db.VarChar(255)
+  DonViLap        String?   @db.VarChar(255)
+  NamLap          Int?
+  TepId           BigInt?
+  ChiTietDiTichId BigInt
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  Tep           Tep?          @relation("BanVeKyThuatDiTichToTep", fields: [TepId], references: [id], onDelete: SetNull)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+model TuSuaCapThietDiTich {
+  id               BigInt    @id @default(autoincrement())
+  TepId            BigInt?
+  ChuDauTu         String?   @db.VarChar(255)
+  DonViGiamSat     String?   @db.VarChar(255)
+  ThoiGianThucHien DateTime?
+  KetQuaTuSua      String?   @db.VarChar(255)
+  PhuongAnTuSua    String?   @db.VarChar(255)
+  DonViTuSua       String?   @db.VarChar(255)
+  TinhTrangDiTich  String?   @db.VarChar(255)
+  ChiTietDiTichId  BigInt
+  ThoiGianTao      DateTime? @default(now())
+  ThoiGianCapNhat  DateTime? @updatedAt
+
+  Tep           Tep?          @relation("TuSuaCapThietDiTichToTep", fields: [TepId], references: [id], onDelete: SetNull)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+model BanQuyetDinhXepHangDiTich {
+  id              BigInt    @id @default(autoincrement())
+  PhanLoaiId      BigInt?
+  ThuMucLuuTru    String?   @db.VarChar(255)
+  MaSo            String?   @db.VarChar(100)
+  TepId           BigInt?
+  CoQuanBanHanh   String?   @db.VarChar(255)
+  NgayBanHanh     DateTime?
+  ChiTietDiTichId BigInt
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  Tep           Tep?          @relation("BanQuyetDinhXepHangDiTichToTep", fields: [TepId], references: [id], onDelete: SetNull)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+model ThietKeBaoQuanDiTich {
+  id               BigInt    @id @default(autoincrement())
+  ThuMucLuuTru     String?   @db.VarChar(255)
+  MaSo             String?   @db.VarChar(100)
+  TepId            BigInt?
+  TenThietKe       String?   @db.VarChar(255)
+  CoQuanToChuc     String?   @db.VarChar(255)
+  DiaDiem          String?   @db.Text
+  ChuDauTu         String?   @db.VarChar(255)
+  CoQuanThamDinh   String?   @db.VarChar(255)
+  CoQuanPheDuyet   String?   @db.VarChar(255)
+  ThoiGianPheDuyet DateTime?
+  SoVanBanPheDuyet String?   @db.VarChar(100)
+  DonViTuVanLapDon String?   @db.VarChar(255)
+  ChiTietDiTichId  BigInt
+  ThoiGianTao      DateTime? @default(now())
+  ThoiGianCapNhat  DateTime? @updatedAt
+
+  Tep           Tep?          @relation("ThietKeBaoQuanDiTichToTep", fields: [TepId], references: [id], onDelete: SetNull)
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}
+
+model NguonThuTaiDiTich {
+  id              BigInt    @id @default(autoincrement())
+  Nam             Int
+  NguonThuCongDuc BigInt?   @default(0)
+  NguonThuDichVu  BigInt?   @default(0)
+  NguonThuTuBanVe BigInt?   @default(0)
+  NguonThuKhac    BigInt?   @default(0)
+  TongSo          BigInt?   @default(0)
+  ChiTietDiTichId BigInt
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+
+  @@unique([ChiTietDiTichId, Nam])
+}
+
+// Bảng khoanh vùng di tích thành phần
+model KhoanhVungDiTichThanhPhan {
+  id              BigInt    @id @default(autoincrement())
+  ThuMucLuuTru    String?   @db.VarChar(255)
+  DonViLap        String?   @db.VarChar(255)
+  NamLap          Int?
+  KhuVucI         Int?
+  KhuVucII        Int?
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  // Foreign keys
+  LoaiKhoanhVungDiTichThanhPhanId BigInt?
+  TepId                           BigInt?
+  ChiTietDiTichId                 BigInt
+  DiTichThanhPhanId               BigInt?
+  PhanLoaiId                      BigInt?
+
+  // Relations
+  PhanLoai        DanhMuc?       @relation("KhoanhVungDiTichThanhPhanToPhanLoai", fields: [PhanLoaiId], references: [id])
+  Tep             Tep?           @relation("KhoanhVungDiTichThanhPhanToTep", fields: [TepId], references: [id], onDelete: SetNull)
+  ChiTietDiTich   ChiTietDiTich  @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+  DiTichThanhPhan ChiTietDiTich? @relation("KhoanhVungDiTichThanhPhanToDiTichThanhPhan", fields: [DiTichThanhPhanId], references: [id], onDelete: Cascade)
+}
+
+model ThuMucTaiLieuThamKhaoDiTich {
+  id              BigInt    @id @default(autoincrement())
+  TacGia          String?   @db.VarChar(255)
+  ThuMucLuuTru    String?   @db.VarChar(255)
+  MaSo            String?   @db.VarChar(100)
+  NamXuatBan      Int?
+  NhaXuatBan      String?   @db.VarChar(255)
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+  // Foreign keys
+  TepId           BigInt?
+  ChiTietDiTichId BigInt?
+}
+
+// Model đăng ký tham quan
+model DangKyThamQuan {
+  id              BigInt    @id @default(autoincrement())
+  HoVaTen         String    @db.Text
+  DiaChi          String?   @db.Text
+  Email           String?   @db.Text
+  DienThoai       String?   @db.VarChar(20)
+  NgayThamQuan    DateTime?
+  SoLuongKhach    Int       @default(1)
+  NoiDung         String?   @db.Text
+  TrangThai       Int       @default(0) // 0: chờ xử lý, 1: đã duyệt, 2: từ chối
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+}
+
+// Model liên hệ
+model LienHe {
+  id              BigInt    @id @default(autoincrement())
+  HoVaTen         String    @db.Text
+  DiaChi          String?   @db.Text
+  Email           String?   @db.Text
+  DienThoai       String?   @db.VarChar(10)
+  NoiDung         String?   @db.Text
+  TrangThai       Int       @default(0) // 0: chưa xử lý, 1: đã xử lý
+  TepDinhKemIds   Json?     @db.JsonB
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+}
+
+// Model cấu hình email
+model CauHinhEmail {
+  id              BigInt    @id @default(autoincrement())
+  MayHost         String    @db.VarChar(255)
+  CongPort        Int       @default(465)
+  TaiKhoan        String?   @db.VarChar(255)
+  MatKhau         String?   @db.VarChar(255)
+  BaoMat          Int       @default(0)
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+}
+
+model VanBanMuonTraHienVat {
+  id BigInt @id @default(autoincrement())
+
+  TrangThai String @default("dang_muon") @db.VarChar(50)
+
+  // Unique fields extracted from JSON for constraint purposes
+  SoHopDong        String? @unique @db.VarChar(255)
+  SoBienBan        String? @unique @db.VarChar(255)
+  SoBienBan2       String? @unique @db.VarChar(255)
+  SoBienBanThanhLy String? @unique @db.VarChar(255)
+
+  ThongTinChung               Json? @db.JsonB
+  ThongTinBenA                Json? @db.JsonB
+  ThongTinBenB                Json? @db.JsonB
+  ThongTinBenC                Json? @db.JsonB
+  ThongTinLuuGiu              Json? @db.JsonB
+  ThongTinChiaSeLoiNhuan      Json? @db.JsonB
+  ThongTinPhatViPham          Json? @db.JsonB
+  ThongTinKhac                Json? @db.JsonB
+  ThongTinThemDanhSachHienVat Json? @db.JsonB
+
+  NguoiTaoId       BigInt?
+  TepVanBanMuonId  BigInt? // Reference to file for loan document
+  TepVanBanTraId   BigInt? // Reference to file for return document
+  TepBanGiaoMuonId BigInt? // Reference to file for loan delivery document
+  TepBanGiaoTraId  BigInt? // Reference to file for return delivery document
+
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  ChiTietPhieuMuonTraHienVats ChiTietPhieuMuonTraHienVat[]
+  NguoiTao                    NguoiDung?                   @relation("VanBanMuonTraHienVatToNguoiTao", fields: [NguoiTaoId], references: [id])
+  TepVanBanMuon               Tep?                         @relation("VanBanMuonTraHienVatToTepMuon", fields: [TepVanBanMuonId], references: [id], onDelete: SetNull)
+  TepVanBanTra                Tep?                         @relation("VanBanMuonTraHienVatToTepTra", fields: [TepVanBanTraId], references: [id], onDelete: SetNull)
+  TepBanGiaoMuon              Tep?                         @relation("VanBanMuonTraHienVatToTepBanGiaoMuon", fields: [TepBanGiaoMuonId], references: [id], onDelete: SetNull)
+  TepBanGiaoTra               Tep?                         @relation("VanBanMuonTraHienVatToTepBanGiaoTra", fields: [TepBanGiaoTraId], references: [id], onDelete: SetNull)
+}
+
+model ChiTietPhieuMuonTraHienVat {
+  id BigInt @id @default(autoincrement())
+
+  VanBanMuonTraHienVatId BigInt
+  ChiTietHienVatId       BigInt
+
+  TinhTrang  String? @db.Text
+  TinhTrang2 String? @db.Text
+
+  TheLoai        String? @db.Text
+  SoLuong        Int?    @default(1)
+  GhiChu         String? @db.Text
+  GhiChu2        String? @db.Text
+  TaiLieuDinhKem String? @db.Text
+
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  VanBanMuonTraHienVat VanBanMuonTraHienVat @relation(fields: [VanBanMuonTraHienVatId], references: [id], onDelete: Cascade)
+  ChiTietHienVat       ChiTietHienVat       @relation(fields: [ChiTietHienVatId], references: [id])
+
+  @@index([VanBanMuonTraHienVatId])
+  @@index([ChiTietHienVatId])
+}
+
+model DiemBanDoDiTich {
+  id BigInt @id @default(autoincrement())
+
+  KinhDo          BigInt?
+  ViDo            BigInt?
+  MoTa            String?   @db.Text
+  ThoiGianTao     DateTime? @default(now())
+  ThoiGianCapNhat DateTime? @updatedAt
+
+  ChiTietDiTichId BigInt
+
+  ChiTietDiTich ChiTietDiTich @relation(fields: [ChiTietDiTichId], references: [id], onDelete: Cascade)
+}

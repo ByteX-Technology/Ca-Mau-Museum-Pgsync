@@ -3,13 +3,11 @@ set -e
 
 echo "🚀 Starting PGSync entrypoint script..."
 echo "📋 Config: ${SCHEMA}"
+echo "✅ All services are healthy (verified by Docker health checks)"
 
 # Create checkpoint directory
 mkdir -p /tmp/.pgsync
 chmod 777 /tmp/.pgsync
-
-# Wait for services to be ready
-sleep 5
 
 # Check if this is first run (bootstrap needed)
 BOOTSTRAP_FLAG="/app/.pgsync_bootstrapped"

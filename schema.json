@@ -1,11 +1,504 @@
 [
   {
     "database": "postgresdb",
-    "index": "danh-muc",
+    "index": "cmm-search-artifact",
+    "setting": {
+      "analysis": {
+        "analyzer": {
+          "vi_analyzer": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": [
+              "lowercase",
+              "asciifolding"
+            ]
+          }
+        }
+      }
+    },
     "nodes": {
-      "table": "NhomDanhMuc",
+      "table": "HoSo",
       "schema": "public",
-      "columns": ["id", "Ten", "TenHeThong"]
-    }
+      "columns": [
+        "id",
+        "TrangThai",
+        "ThoiGianTao",
+        "ThoiGianCapNhat"
+      ],
+      "children": [
+        {
+          "table": "ChiTietHienVat",
+          "columns": [
+            "id",
+            "TenHienVat",
+            "MieuTa",
+            "SoDangKy",
+            "LoaiHienVatId"
+          ],
+          "label": "_artifact",
+          "relationship": {
+            "variant": "object",
+            "type": "one_to_one"
+          },
+          "transform": {
+            "rename": {
+              "id": "idGoc",
+              "TenHienVat": "TieuDe",
+              "MieuTa": "MoTa"
+            },
+            "mapping": {
+              "TieuDe": {
+                "type": "text",
+                "analyzer": "vi_analyzer",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword"
+                  }
+                }
+              },
+              "MoTa": {
+                "type": "text",
+                "analyzer": "vi_analyzer"
+              },
+              "ThuocNhom": {
+                "type": "keyword"
+              },
+              "Nhan": {
+                "type": "keyword"
+              },
+              "MaSoAnhDaiDien": {
+                "type": "keyword"
+              },
+              "KhoaAnhDaiDien": {
+                "type": "keyword"
+              }
+            }
+          },
+          "children": [
+            {
+              "table": "HinhAnhHienVat",
+              "columns": [
+                "TepId"
+              ],
+              "label": "HinhAnhHienVat",
+              "relationship": {
+                "variant": "object",
+                "type": "one_to_many"
+              },
+              "children": [
+                {
+                  "table": "Tep",
+                  "columns": [
+                    "id",
+                    "Khoa"
+                  ],
+                  "label": "_tep",
+                  "relationship": {
+                    "variant": "object",
+                    "type": "one_to_one"
+                  },
+                  "transform": {
+                    "rename": {
+                      "id": "MaSoAnhDaiDien",
+                      "Khoa": "KhoaAnhDaiDien"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "plugins": [
+      "SearchFilter"
+    ]
+  },
+  {
+    "database": "postgresdb",
+    "index": "cmm-search-relic",
+    "setting": {
+      "analysis": {
+        "analyzer": {
+          "vi_analyzer": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": [
+              "lowercase",
+              "asciifolding"
+            ]
+          }
+        }
+      }
+    },
+    "nodes": {
+      "table": "HoSo",
+      "schema": "public",
+      "columns": [
+        "id",
+        "TrangThai",
+        "ThoiGianTao",
+        "ThoiGianCapNhat"
+      ],
+      "children": [
+        {
+          "table": "ChiTietDiTich",
+          "columns": [
+            "id",
+            "TenDiTich",
+            "MoTa",
+            "MoTaNgan",
+            "SoQuyetDinh"
+          ],
+          "label": "_relic",
+          "relationship": {
+            "variant": "object",
+            "type": "one_to_one"
+          },
+          "transform": {
+            "rename": {
+              "id": "idGoc",
+              "TenDiTich": "TieuDe",
+              "MoTaNgan": "MoTa"
+            },
+            "mapping": {
+              "TieuDe": {
+                "type": "text",
+                "analyzer": "vi_analyzer",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword"
+                  }
+                }
+              },
+              "MoTa": {
+                "type": "text",
+                "analyzer": "vi_analyzer"
+              },
+              "ThuocNhom": {
+                "type": "keyword"
+              },
+              "Nhan": {
+                "type": "keyword"
+              },
+              "MaSoAnhDaiDien": {
+                "type": "keyword"
+              },
+              "KhoaAnhDaiDien": {
+                "type": "keyword"
+              }
+            }
+          },
+          "children": [
+            {
+              "table": "HangDiTich",
+              "columns": [
+                "LoaiHangId",
+                "ThoiGianTao",
+                "SoQuyetDinh"
+              ],
+              "label": "HangDiTich",
+              "relationship": {
+                "variant": "object",
+                "type": "one_to_many"
+              },
+              "children": [
+                {
+                  "table": "DanhMuc",
+                  "columns": [
+                    "Ten"
+                  ],
+                  "label": "_loaiHang",
+                  "relationship": {
+                    "variant": "object",
+                    "type": "one_to_one"
+                  },
+                  "transform": {
+                    "rename": {
+                      "Ten": "Nhan"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "table": "AnhDiTich",
+              "columns": [
+                "TepId"
+              ],
+              "label": "AnhDiTich",
+              "relationship": {
+                "variant": "object",
+                "type": "one_to_many"
+              },
+              "children": [
+                {
+                  "table": "Tep",
+                  "columns": [
+                    "id",
+                    "Khoa"
+                  ],
+                  "label": "_tep",
+                  "relationship": {
+                    "variant": "object",
+                    "type": "one_to_one"
+                  },
+                  "transform": {
+                    "rename": {
+                      "id": "MaSoAnhDaiDien",
+                      "Khoa": "KhoaAnhDaiDien"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "plugins": [
+      "SearchFilter"
+    ]
+  },
+  {
+    "database": "postgresdb",
+    "index": "cmm-search-heritage",
+    "setting": {
+      "analysis": {
+        "analyzer": {
+          "vi_analyzer": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": [
+              "lowercase",
+              "asciifolding"
+            ]
+          }
+        }
+      }
+    },
+    "nodes": {
+      "table": "HoSo",
+      "schema": "public",
+      "columns": [
+        "id",
+        "TrangThai",
+        "ThoiGianTao",
+        "ThoiGianCapNhat"
+      ],
+      "children": [
+        {
+          "table": "ChiTietDiSanVanHoaPhiVatThe",
+          "columns": [
+            "id",
+            "TenDiSan",
+            "SoQuyetDinh",
+            "AnhDaiDienId",
+            "MoTaNgan"
+          ],
+          "label": "_heritage",
+          "relationship": {
+            "variant": "object",
+            "type": "one_to_one"
+          },
+          "transform": {
+            "rename": {
+              "id": "idGoc",
+              "TenDiSan": "TieuDe",
+              "MoTa": "MoTa"
+            },
+            "mapping": {
+              "TieuDe": {
+                "type": "text",
+                "analyzer": "vi_analyzer",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword"
+                  }
+                }
+              },
+              "MoTa": {
+                "type": "text",
+                "analyzer": "vi_analyzer"
+              },
+              "ThuocNhom": {
+                "type": "keyword"
+              },
+              "Nhan": {
+                "type": "keyword"
+              },
+              "MaSoAnhDaiDien": {
+                "type": "keyword"
+              },
+              "KhoaAnhDaiDien": {
+                "type": "keyword"
+              }
+            }
+          },
+          "children": []
+        }
+      ]
+    },
+    "plugins": [
+      "SearchFilter"
+    ]
+  },
+  {
+    "database": "postgresdb",
+    "index": "cmm-search-tulieu",
+    "setting": {
+      "analysis": {
+        "analyzer": {
+          "vi_analyzer": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": [
+              "lowercase",
+              "asciifolding"
+            ]
+          }
+        }
+      }
+    },
+    "nodes": {
+      "table": "TuLieu",
+      "schema": "public",
+      "columns": [
+        "id",
+        "TieuDe",
+        "MoTa",
+        "LoaiTuLieu",
+        "DuongDanAnhDaiDien",
+        "ThoiGianTao",
+        "ThoiGianCapNhat",
+        "HienThi",
+        "MoTaNgan"
+      ],
+      "transform": {
+        "rename": {
+          "id": "idGoc"
+        },
+        "mapping": {
+          "TieuDe": {
+            "type": "text",
+            "analyzer": "vi_analyzer",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              }
+            }
+          },
+          "MoTa": {
+            "type": "text",
+            "analyzer": "vi_analyzer"
+          },
+          "ThuocNhom": {
+            "type": "keyword"
+          },
+          "Nhan": {
+            "type": "keyword"
+          },
+          "KhoaAnhDaiDien": {
+            "type": "keyword"
+          }
+        }
+      }
+    },
+    "plugins": [
+      "SearchFilter"
+    ]
+  },
+  {
+    "database": "postgresdb",
+    "index": "cmm-search-noidung",
+    "nodes": {
+      "table": "NoiDung",
+      "columns": [
+        "id",
+        "TieuDe",
+        "MoTa",
+        "TrangThai",
+        "ThoiGianTao",
+        "ThoiGianCapNhat",
+        "AnhDaiDienId",
+        "NhomNoiDungGocId"
+      ],
+      "transform": {
+        "rename": {
+          "id": "idGoc"
+        }
+      },
+      "children": [
+        {
+          "table": "NhomNoiDung",
+          "columns": [
+            "id",
+            "Ten",
+            "TenHeThong"
+          ],
+          "label": "_nhom",
+          "relationship": {
+            "variant": "object",
+            "type": "one_to_one",
+            "foreign_key": {
+              "child": [
+                "NhomNoiDungGocId"
+              ],
+              "parent": [
+                "id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "plugins": [
+      "SearchFilter"
+    ]
+  },
+  {
+    "database": "postgresdb",
+    "index": "cmm-search-bosuutap",
+    "nodes": {
+      "table": "BoSuuTap",
+      "columns": [
+        "id",
+        "TenBoSuuTap",
+        "MoTa",
+        "ThoiGianTao",
+        "ThoiGianCapNhat",
+        "TepId",
+        "HoatDong"
+      ],
+      "transform": {
+        "rename": {
+          "id": "idGoc",
+          "TenBoSuuTap": "TieuDe"
+        }
+      },
+      "children": [
+        {
+          "table": "Tep",
+          "columns": [
+            "id",
+            "Khoa"
+          ],
+          "label": "_tep",
+          "relationship": {
+            "variant": "object",
+            "type": "one_to_one"
+          },
+          "transform": {
+            "rename": {
+              "id": "MaSoAnhDaiDien",
+              "Khoa": "KhoaAnhDaiDien"
+            }
+          }
+        }
+      ]
+    },
+    "plugins": [
+      "SearchFilter"
+    ]
   }
 ]
