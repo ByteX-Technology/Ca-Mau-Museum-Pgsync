@@ -238,12 +238,12 @@ class SearchFilterPlugin(Plugin):
         }
 
         nhan_list = []
-        
+
         # Add SoQuyetDinh from ChiTietDiTich if exists
         so_quyet_dinh_chitiet = relic.get('SoQuyetDinh', '')
         if so_quyet_dinh_chitiet:
             nhan_list.append(so_quyet_dinh_chitiet)
-        
+
         # Add from HangDiTich array
         hang_list = relic.get('HangDiTich') or []
         for hang in hang_list:
@@ -282,7 +282,7 @@ class SearchFilterPlugin(Plugin):
             'MoTa': heritage.get('MoTaNgan') or '',
             'ThoiGianTao': doc.get('ThoiGianTao'),
             'ThoiGianCapNhat': doc.get('ThoiGianCapNhat'),
-            'ThuocNhom': 'Di sản',
+            'ThuocNhom': 'Di sản văn hoá phi vật thể',
             'deleted': False
         }
 
